@@ -14,9 +14,7 @@ We accelerate the adoption of data and AI to positively impact people and organi
 
 Artefact is an end-to-end specialized Data & AI consulting company bridging the gap between Business & Technology.
 
-We combine Strategy & Business expertise with Data Science & AI capabilities to design, build, and scale AI-native solutions that create measurable business impact.
-
-## 2. Differentiators
+## 2. Key Differentiators
 
 ### Why Artefact?
 
