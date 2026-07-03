@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import html
+import io
 import mimetypes
 from pathlib import Path
 
@@ -11,20 +12,94 @@ ASSET_ROOT = Path("/Users/jose/Documents/artefact-html-skill/assets")
 OUT = ROOT / "artefact-latam-website.html"
 
 
+def first_existing(*paths: Path) -> Path:
+    for path in paths:
+        if path.exists():
+            return path
+    raise FileNotFoundError(f"None of these paths exist: {', '.join(str(path) for path in paths)}")
+
+
 def data_uri(path: Path) -> str:
     mime = mimetypes.guess_type(path.name)[0]
+    raw = path.read_bytes()
     if mime is None:
-        if path.suffix.lower() == ".svg":
-            mime = "image/svg+xml"
-        elif path.suffix.lower() == ".webp":
+        if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+            mime = "image/png"
+        elif raw.startswith(b"\xff\xd8\xff"):
+            mime = "image/jpeg"
+        elif raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
             mime = "image/webp"
+        elif raw.lstrip().startswith(b"<svg") or path.suffix.lower() == ".svg":
+            mime = "image/svg+xml"
         else:
             mime = "application/octet-stream"
-    return f"data:{mime};base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
+    return f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
+
+
+def cropped_png_data_uri(path: Path, box: tuple[int, int, int, int]) -> str:
+    from PIL import Image
+
+    image = Image.open(path).convert("RGBA").crop(box)
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('ascii')}"
+
+
+def trimmed_png_data_uri(path: Path) -> str:
+    from PIL import Image
+
+    image = Image.open(path).convert("RGBA")
+    bbox = image.getbbox()
+    if bbox:
+        image = image.crop(bbox)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('ascii')}"
+
+
+def logo_without_solid_background_data_uri(path: Path, background: tuple[int, int, int], tolerance: int = 42) -> str:
+    from PIL import Image
+
+    image = Image.open(path).convert("RGBA")
+    pixels = image.load()
+    bg_r, bg_g, bg_b = background
+    for y in range(image.height):
+        for x in range(image.width):
+            r, g, b, a = pixels[x, y]
+            distance = abs(r - bg_r) + abs(g - bg_g) + abs(b - bg_b)
+            if distance <= tolerance:
+                pixels[x, y] = (255, 255, 255, 0)
+            elif a:
+                pixels[x, y] = (255, 255, 255, a)
+
+    bbox = image.getbbox()
+    if bbox:
+        image = image.crop(bbox)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('ascii')}"
 
 
 def logo_cell(name: str, src: str) -> str:
     return f'<div class="logo-cell"><img src="{src}" alt="{html.escape(name)} logo"></div>'
+
+
+def timeline_logo(name: str, path: Path | None, class_name: str = "", src: str | None = None) -> str:
+    classes = "genai-logo"
+    if class_name:
+        classes += f" {class_name}"
+    if src:
+        return f'<span class="{classes}"><img src="{src}" alt="{html.escape(name)} logo"></span>'
+    if path and path.exists():
+        raw = path.read_bytes()
+        if raw.lstrip().startswith(b"<svg") or path.suffix.lower() == ".svg":
+            logo_src = data_uri(path)
+        else:
+            logo_src = trimmed_png_data_uri(path)
+        return f'<span class="{classes}"><img src="{logo_src}" alt="{html.escape(name)} logo"></span>'
+    return f'<span class="{classes} logo-fallback">{html.escape(name)}</span>'
 
 
 def card(title: str, body: str) -> str:
@@ -174,6 +249,61 @@ logo_paths = [
 logos = [logo_cell(name, data_uri(path)) for name, path in logo_paths if path.exists()]
 logo_track = "\n".join(logos + logos)
 
+client_logo_root = ASSET_ROOT / "clients-logos"
+consultancy_logo_root = ASSET_ROOT / "consultancy-logos"
+ai_logo_root = ASSET_ROOT / "logos"
+chatgpt_icon = data_uri(ai_logo_root / "chatgpt-logo.webp")
+agent_icon = data_uri(ai_logo_root / "agent-logo.png")
+genai_stars_icon = cropped_png_data_uri(ai_logo_root / "genai-logo.webp", (60, 45, 430, 400))
+bnp_paribas_white_logo = logo_without_solid_background_data_uri(client_logo_root / "bnp-paribas-logo", (0, 128, 83))
+heineken_white_logo = trimmed_png_data_uri(first_existing(
+    client_logo_root / "heineken-logo.png",
+    client_logo_root / "heineken-logo.webp",
+    Path("/Users/jose/.codex/skills/artefact-html/assets/clients-logos/heineken-logo.webp"),
+    Path("/Users/jose/.codex/skills/artefact-presentations/assets/clients-logos/heineken-logo.webp"),
+))
+orange_white_logo = trimmed_png_data_uri(client_logo_root / "orange-logo.png")
+redbull_white_logo = trimmed_png_data_uri(client_logo_root / "redbull-logo.png")
+
+genai_early_logos = "\n".join([
+    timeline_logo("L'Oreal", client_logo_root / "loreal-logo"),
+    timeline_logo("Sodexo", client_logo_root / "sodexo-logo.svg"),
+    timeline_logo("Adeo", client_logo_root / "adeo-logo.webp"),
+    timeline_logo("Chanel", client_logo_root / "chanel-logo"),
+])
+
+genai_early_use_cases = "\n".join([
+    '<div class="early-usecase"><span>2018</span>' + timeline_logo("L'Oreal", client_logo_root / "loreal-logo") + '<small>Trendspotting</small></div>',
+    '<div class="early-usecase"><span>2020</span>' + timeline_logo("Chanel", client_logo_root / "chanel-logo") + '<small>Augmented agents for call centers</small></div>',
+    '<div class="early-usecase"><span>2021-22</span>' + timeline_logo("Sodexo", client_logo_root / "sodexo-logo.svg") + '<small>Product data enrichment</small></div>',
+    '<div class="early-usecase"><span>2021-22</span>' + timeline_logo("Adeo", client_logo_root / "adeo-logo.webp") + '<small>Product entity matching</small></div>',
+])
+
+genai_acceleration_logos = "\n".join([
+    timeline_logo("Samsung", consultancy_logo_root / "samsung-logo.png"),
+    timeline_logo("L'Oreal", client_logo_root / "loreal-logo"),
+    timeline_logo("Orange", None, "wide orange", orange_white_logo),
+    timeline_logo("Renault", client_logo_root / "renault-logo.svg"),
+    timeline_logo("BNP Paribas", None, "wide", bnp_paribas_white_logo),
+    timeline_logo("LVMH", client_logo_root / "lvmh-logo.png", "wide lvmh"),
+    timeline_logo("Kering", client_logo_root / "kering-logo.webp"),
+    timeline_logo("Chanel", client_logo_root / "chanel-logo", "wide chanel"),
+    timeline_logo("Schneider Electric", client_logo_root / "schneider-electric-logo", "wide"),
+    timeline_logo("Red Bull", None, "wide redbull", redbull_white_logo),
+    timeline_logo("Legrand", client_logo_root / "legrand-logo"),
+    timeline_logo("Burger King", client_logo_root / "burgerking-logo.png", "wide burgerking"),
+    timeline_logo("Pernod Ricard", client_logo_root / "pernod-ricard-logo.webp", "pernod"),
+    timeline_logo("Moet Hennessy", client_logo_root / "moet-hennessy-logo.png", "wide moet"),
+])
+
+genai_agentic_logos = "\n".join([
+    timeline_logo("BNP Paribas", None, "wide", bnp_paribas_white_logo),
+    timeline_logo("Renault", client_logo_root / "renault-logo.svg"),
+    timeline_logo("Carrefour", client_logo_root / "carrefour-logo.svg"),
+    timeline_logo("HEINEKEN", None, "wide heineken", heineken_white_logo),
+    timeline_logo("Orange", None, "wide orange", orange_white_logo),
+])
+
 industries = [
     "Financial Services",
     "Healthcare",
@@ -204,6 +334,79 @@ business = [
     "Change management and adoption",
     "Data & AI governance",
 ]
+
+genai_timeline_section = f"""
+          <article class="scene genai-scene">
+            <div class="genai-inner">
+              <div class="genai-kicker">
+                <h2>We've been there since the beginning...</h2>
+                <p>We also have strong knowledge of Agents & GenAI, which started well before the hype. We are now supporting large players in the deployment of their Agentic programs.</p>
+              </div>
+              <div class="genai-timeline genai-vertical" aria-label="Artefact GenAI and Agentic AI timeline">
+                <article class="genai-row first early-arc">
+                  <div class="genai-moment">
+                    <div class="moment-copy">
+                      <span>GPT 1, 2 & 3<br>to ChatGPT</span>
+                      <strong>2018-2022</strong>
+                    </div>
+                    <img class="moment-icon chatgpt" src="{chatgpt_icon}" alt="ChatGPT logo">
+                    <span class="moment-dot" aria-hidden="true"></span>
+                  </div>
+                  <div class="genai-story early-arc-story">
+                    <div class="story-copy">
+                      <p class="story-eyebrow">Up to ChatGPT</p>
+                      <h3>Early GenAI use cases emerged progressively, well before the hype.</h3>
+                      <p>From GPT 1, 2 & 3 to ChatGPT, Artefact worked on early GenAI premises that later became a board-level acceleration topic.</p>
+                    </div>
+                    <div class="genai-logo-field before early-usecases">
+                      {genai_early_use_cases}
+                    </div>
+                  </div>
+                </article>
+                <article class="genai-row">
+                  <div class="genai-moment">
+                    <div class="moment-copy">
+                      <span>GenAI acceleration</span>
+                      <strong>2021-2023</strong>
+                    </div>
+                    <img class="moment-icon genai-stars" src="{genai_stars_icon}" alt="GenAI stars">
+                    <span class="moment-dot" aria-hidden="true"></span>
+                  </div>
+                  <div class="genai-story">
+                    <div class="story-copy">
+                      <p class="story-eyebrow">GenAI acceleration</p>
+                      <h3>New opportunities emerged to design and deploy enterprise-grade AI solutions.</h3>
+                      <p>Artefact supported large players across industries, functions, and ecosystems as GenAI moved from promising pilots to scaled business use cases.</p>
+                    </div>
+                    <div class="genai-logo-field">
+                      {genai_acceleration_logos}
+                    </div>
+                  </div>
+                </article>
+                <article class="genai-row last">
+                  <div class="genai-moment">
+                    <div class="moment-copy">
+                      <span>Agentic programs</span>
+                      <strong>2024 onwards</strong>
+                    </div>
+                    <img class="moment-icon agent" src="{agent_icon}" alt="Agentic AI icon">
+                    <span class="moment-dot" aria-hidden="true"></span>
+                  </div>
+                  <div class="genai-story agentic">
+                    <div class="story-copy">
+                      <p class="story-eyebrow">Agentic programs</p>
+                      <h3>Enterprise-wide programs now design, deploy, and scale autonomous AI agents.</h3>
+                      <p>We help clients move from isolated AI tools to modular, secure, vendor-agnostic architectures and AI-native workflows.</p>
+                    </div>
+                    <div class="genai-logo-field agentic">
+                      {genai_agentic_logos}
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </article>
+"""
 
 html_doc = f"""<!doctype html>
 <html lang="en">
@@ -289,6 +492,9 @@ html_doc = f"""<!doctype html>
       box-shadow:none;
       text-decoration:none;
       pointer-events:auto;
+      opacity:1;
+      transform:translateY(0);
+      transition:opacity .24s ease, transform .24s ease;
     }}
     .brand-nav img:first-child {{
       width:128px;
@@ -321,6 +527,11 @@ html_doc = f"""<!doctype html>
       transform:translateY(-18px) scale(.96);
       pointer-events:none;
     }}
+    body:not([data-active-section="hero"]) .brand-nav {{
+      opacity:0;
+      transform:translateY(-16px);
+      pointer-events:none;
+    }}
     body:not([data-active-section="hero"]) .top-shell::after {{
       opacity:1;
       transform:translateX(-50%) scaleX(1);
@@ -329,6 +540,12 @@ html_doc = f"""<!doctype html>
     body:not([data-active-section="hero"]) .top-shell:focus-within .top-menu {{
       opacity:1;
       transform:translateY(0) scale(1);
+      pointer-events:auto;
+    }}
+    body:not([data-active-section="hero"]) .top-shell:hover .brand-nav,
+    body:not([data-active-section="hero"]) .top-shell:focus-within .brand-nav {{
+      opacity:1;
+      transform:translateY(0);
       pointer-events:auto;
     }}
     body:not([data-active-section="hero"]) .top-shell:hover::after,
@@ -683,6 +900,17 @@ html_doc = f"""<!doctype html>
       padding:38px 0;
       border-top:1px solid var(--line);
     }}
+    .genai-scene {{
+      min-height:auto;
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      padding:100px 0 108px;
+      border-top:0;
+      background:
+        radial-gradient(circle at 88% 12%, rgba(255,0,102,.16), transparent 28%),
+        radial-gradient(circle at 16% 45%, rgba(40,199,255,.12), transparent 32%),
+        linear-gradient(135deg,#000510 0%, #061229 48%, #111b46 100%);
+    }}
     .card, .service-card, .proof-card, .source-card {{
       border:1px solid var(--line);
       border-radius:8px;
@@ -1000,37 +1228,304 @@ html_doc = f"""<!doctype html>
       font-size:12px;
       line-height:1.45;
     }}
-    .timeline {{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:18px;
-      position:relative;
+    .genai-kicker {{
+      max-width:960px;
+      margin-bottom:44px;
     }}
-    .timeline::before {{
+    .genai-kicker h2 {{
+      max-width:900px;
+      margin-bottom:14px;
+      font-size:clamp(42px, 5.7vw, 80px);
+      line-height:.92;
+      color:#fff;
+    }}
+    .genai-kicker p {{
+      max-width:780px;
+      color:#cbd5e1;
+      font-size:18px;
+    }}
+    .genai-inner {{
+      width:min(100% - 64px, 1180px);
+      margin:0 auto;
+    }}
+    .genai-timeline {{
+      position:relative;
+      display:grid;
+      gap:26px;
+      background:
+        radial-gradient(circle at 12% 6%, rgba(40,199,255,.16), transparent 26%),
+        radial-gradient(circle at 90% 28%, rgba(255,0,102,.18), transparent 31%),
+        linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:24px;
+      padding:34px;
+      box-shadow:0 34px 90px rgba(0,0,0,.34);
+    }}
+    .genai-row {{
+      display:grid;
+      grid-template-columns:minmax(250px, 340px) minmax(0, 1fr);
+      gap:34px;
+      align-items:stretch;
+      min-height:198px;
+    }}
+    .genai-moment {{
+      position:relative;
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) 74px 42px;
+      gap:18px;
+      align-items:center;
+      padding:8px 0;
+    }}
+    .genai-moment::before {{
       content:"";
       position:absolute;
-      left:6%;
-      right:6%;
-      top:34px;
-      height:3px;
-      background:var(--grad);
+      right:20px;
+      top:-44px;
+      bottom:-44px;
+      width:2px;
+      background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.94), rgba(255,255,255,.18));
     }}
-    .time-card {{
+    .genai-row.first .genai-moment::before {{ top:50%; }}
+    .genai-row.last .genai-moment::before {{ bottom:50%; }}
+    .moment-copy {{
+      text-align:right;
+      color:#fff;
+    }}
+    .moment-copy span {{
+      display:block;
+      margin-bottom:12px;
+      color:#e2e8f0;
+      font-size:18px;
+      line-height:1.1;
+    }}
+    .moment-copy strong {{
+      display:block;
+      color:#fff;
+      font-size:clamp(28px, 2.8vw, 38px);
+      font-style:italic;
+      line-height:1;
+      letter-spacing:0;
+    }}
+    .moment-icon {{
       position:relative;
-      z-index:1;
-      padding:22px;
-      border-radius:8px;
-      border:1px solid var(--line);
-      background:#fff;
-      box-shadow:0 16px 38px rgba(15,23,42,.07);
+      z-index:2;
+      width:62px;
+      height:62px;
+      object-fit:contain;
+      justify-self:center;
+      filter:brightness(0) invert(1) drop-shadow(0 12px 22px rgba(0,0,0,.24));
     }}
-    .time-dot {{
-      width:18px;
-      height:18px;
+    .moment-icon.genai-stars {{
+      width:66px;
+      height:66px;
+    }}
+    .moment-icon.agent {{
+      width:60px;
+      height:60px;
+    }}
+    .moment-dot {{
+      position:relative;
+      z-index:3;
+      width:38px;
+      height:38px;
+      border:3px solid #fff;
       border-radius:50%;
-      background:var(--magenta);
-      margin-bottom:18px;
-      box-shadow:0 0 0 8px rgba(255,0,102,.1);
+      background:#101a3c;
+      box-shadow:0 0 0 6px rgba(255,255,255,.13), 0 18px 30px rgba(0,0,0,.28);
+    }}
+    .moment-dot::after {{
+      content:"";
+      position:absolute;
+      inset:7px;
+      border-radius:50%;
+      background:linear-gradient(135deg, #fff, #dbeafe);
+    }}
+    .genai-story {{
+      display:grid;
+      grid-template-columns:minmax(0, .95fr) minmax(320px, 1.05fr);
+      gap:28px;
+      align-items:center;
+      min-height:198px;
+      padding:26px 28px;
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      backdrop-filter:blur(16px);
+      box-shadow:0 22px 70px rgba(0,0,0,.18);
+    }}
+    .genai-row.early-arc {{
+      min-height:260px;
+    }}
+    .genai-row.early-arc .genai-moment {{
+      min-height:260px;
+    }}
+    .genai-story.early-arc-story {{
+      min-height:260px;
+      grid-template-columns:minmax(0, 1.05fr) minmax(340px, .95fr);
+      padding:34px 38px;
+      background:linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,0,102,.1));
+    }}
+    .genai-story.early-arc-story h3 {{
+      max-width:660px;
+      font-size:clamp(30px, 2.45vw, 42px);
+    }}
+    .genai-story.early-arc-story p:not(.story-eyebrow) {{
+      max-width:600px;
+      font-size:18px;
+    }}
+    .genai-story.early-arc-story .genai-logo-field {{
+      justify-content:center;
+      gap:24px 34px;
+    }}
+    .genai-logo-field.before.early-usecases {{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(132px, 1fr));
+      gap:16px;
+      align-items:stretch;
+    }}
+    .early-usecase {{
+      display:grid;
+      grid-template-rows:auto 58px auto;
+      place-items:center;
+      gap:8px;
+      min-height:126px;
+      padding:14px 12px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background:rgba(255,255,255,.055);
+    }}
+    .early-usecase span {{
+      color:var(--magenta);
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.08em;
+    }}
+    .early-usecase small {{
+      color:#cbd5e1;
+      font-size:12px;
+      font-weight:700;
+      line-height:1.2;
+      text-align:center;
+    }}
+    .early-usecase .genai-logo {{
+      width:132px;
+      height:58px;
+    }}
+    .early-usecase .genai-logo img {{
+      max-width:124px;
+      max-height:48px;
+    }}
+    .genai-story.agentic {{
+      background:linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,0,102,.14));
+    }}
+    .genai-story .story-eyebrow {{
+      margin:0 0 10px;
+      color:var(--magenta);
+      font-size:12px;
+      font-weight:900;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+    }}
+    .genai-story h3 {{
+      margin:0 0 10px;
+      color:#fff;
+      font-size:clamp(24px, 2vw, 32px);
+      line-height:1.05;
+    }}
+    .genai-story p {{
+      margin:0;
+      color:#cbd5e1;
+      font-size:16px;
+      line-height:1.45;
+    }}
+    .genai-logo-field {{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-start;
+      gap:18px 26px;
+      min-height:72px;
+      padding:0;
+    }}
+    .genai-logo-field.before {{
+      display:flex;
+    }}
+    .genai-logo-field.agentic {{
+      gap:18px 28px;
+    }}
+    .genai-logo {{
+      display:grid;
+      place-items:center;
+      width:122px;
+      height:52px;
+      color:#fff;
+      font-weight:900;
+      filter:drop-shadow(0 12px 12px rgba(0,0,0,.3));
+    }}
+    .genai-logo img {{
+      display:block;
+      max-width:100%;
+      max-height:100%;
+      object-fit:contain;
+      filter:brightness(0) invert(1);
+    }}
+    .genai-logo:not(.wide) img {{
+      max-width:112px;
+      max-height:42px;
+    }}
+    .genai-logo.wide {{
+      width:168px;
+      height:56px;
+    }}
+    .genai-logo.wide img {{
+      max-width:160px;
+      max-height:50px;
+    }}
+    .genai-logo.redbull img {{
+      max-width:142px;
+      max-height:64px;
+    }}
+    .genai-logo.heineken img {{
+      max-width:158px;
+      max-height:48px;
+    }}
+    .genai-logo.orange img {{
+      max-width:142px;
+      max-height:40px;
+    }}
+    .genai-logo.lvmh img {{
+      max-width:132px;
+      max-height:32px;
+    }}
+    .genai-logo.chanel img {{
+      max-width:138px;
+      max-height:48px;
+    }}
+    .genai-logo.burgerking img {{
+      max-width:150px;
+      max-height:36px;
+      filter:brightness(0) invert(1);
+    }}
+    .genai-logo.pernod img {{
+      max-width:104px;
+      max-height:56px;
+    }}
+    .genai-logo.moet img {{
+      max-width:156px;
+      max-height:34px;
+    }}
+    .genai-logo.logo-fallback {{
+      padding:8px 12px;
+      border:1px solid rgba(255,255,255,.28);
+      border-radius:999px;
+      background:rgba(255,255,255,.17);
+      font-size:17px;
+      letter-spacing:.02em;
+      box-shadow:0 12px 26px rgba(0,0,0,.12);
+    }}
+    .genai-logo.wide.logo-fallback {{
+      min-width:150px;
+      font-size:20px;
     }}
     .operating {{
       display:grid;
@@ -1454,7 +1949,7 @@ html_doc = f"""<!doctype html>
     }}
     dialog {{
       width:min(1060px, calc(100% - 32px));
-      max-height:92vh;
+      max-height:96vh;
       border:0;
       border-radius:10px;
       padding:0;
@@ -1463,7 +1958,7 @@ html_doc = f"""<!doctype html>
     }}
     dialog::backdrop {{ background:rgba(2,6,23,.62); }}
     .modal-body {{
-      max-height:92vh;
+      max-height:96vh;
       overflow:auto;
       padding:34px;
       background:#fff;
@@ -1492,7 +1987,7 @@ html_doc = f"""<!doctype html>
     }}
     .positioning-modal .modal-body {{
       color:#fff;
-      padding:28px 34px 30px;
+      padding:22px 28px 24px;
       background:
         radial-gradient(circle at 82% 0%, rgba(255,0,102,.28), transparent 34%),
         linear-gradient(135deg,#000613 0%, #061229 52%, #160015 100%);
@@ -1500,7 +1995,8 @@ html_doc = f"""<!doctype html>
     .positioning-modal .modal-head {{
       align-items:flex-start;
       border-bottom-color:rgba(226,232,240,.18);
-      margin-bottom:26px;
+      padding-bottom:14px;
+      margin-bottom:18px;
     }}
     .modal-brand {{
       display:flex;
@@ -1519,14 +2015,17 @@ html_doc = f"""<!doctype html>
     .positioning-modal .modal-head h2 {{
       max-width:980px;
       color:#fff;
-      font-size:clamp(36px, 4.1vw, 56px);
-      line-height:.96;
+      font-size:clamp(30px, 3.2vw, 44px);
+      line-height:.98;
       letter-spacing:0;
     }}
     .positioning-modal .close {{
       border-color:rgba(255,255,255,.22);
       background:rgba(255,255,255,.06);
       color:#fff;
+      min-width:40px;
+      height:40px;
+      font-size:22px;
     }}
     .archetype-comparison {{
       display:grid;
@@ -1538,12 +2037,12 @@ html_doc = f"""<!doctype html>
       box-shadow:0 28px 78px rgba(0,0,0,.32);
     }}
     .comparison-head {{
-      padding:26px 28px 18px;
+      padding:18px 24px 14px;
     }}
     .comparison-head h3 {{
       margin:0;
       color:#fff;
-      font-size:clamp(24px, 2.3vw, 34px);
+      font-size:clamp(22px, 1.9vw, 28px);
       line-height:1.08;
       letter-spacing:0;
     }}
@@ -1557,7 +2056,7 @@ html_doc = f"""<!doctype html>
       background:linear-gradient(145deg, rgba(255,0,102,.72), rgba(117,46,125,.68) 58%, rgba(39,50,117,.5));
     }}
     .comparison-head .artefact-lockup {{
-      width:250px;
+      width:210px;
       padding:0;
       background:transparent;
       box-shadow:none;
@@ -1578,33 +2077,33 @@ html_doc = f"""<!doctype html>
     .competitor-cell {{
       display:grid;
       grid-template-columns:minmax(150px,.85fr) minmax(0,1fr);
-      gap:22px;
-      padding:15px 28px;
+      gap:18px;
+      padding:12px 24px;
       background:rgba(255,255,255,.04);
     }}
     .artefact-cell {{
-      padding:15px 28px 15px 34px;
+      padding:12px 24px 12px 30px;
       background:linear-gradient(145deg, rgba(255,0,102,.72), rgba(117,46,125,.68) 58%, rgba(39,50,117,.5));
     }}
     .competitor-cell strong {{
       color:#fff;
-      font-size:17px;
+      font-size:15px;
       line-height:1.12;
     }}
     .competitor-cell p {{
       margin:0;
       color:rgba(255,255,255,.78);
-      font-size:16px;
-      line-height:1.28;
+      font-size:14px;
+      line-height:1.22;
     }}
     .artefact-cell ul {{
       margin:0;
-      padding:0 0 0 22px;
+      padding:0 0 0 18px;
       color:#fff;
-      font-size:15px;
-      line-height:1.18;
+      font-size:13.5px;
+      line-height:1.14;
     }}
-    .artefact-cell li + li {{ margin-top:4px; }}
+    .artefact-cell li + li {{ margin-top:3px; }}
     .modal-metrics {{
       display:grid;
       grid-template-columns:repeat(3,1fr);
@@ -1704,6 +2203,19 @@ html_doc = f"""<!doctype html>
       box-shadow:0 24px 70px rgba(0,0,0,.24);
     }}
     .card h3, .service-card h3, .proof-card h3 {{ color:#fff; }}
+    #differentiators .genai-scene .genai-kicker h2 {{
+      color:#fff !important;
+      -webkit-text-fill-color:#fff;
+      opacity:1;
+      mix-blend-mode:normal;
+    }}
+    #differentiators .genai-scene .genai-kicker p {{
+      color:#e2e8f0 !important;
+      opacity:1;
+    }}
+    #differentiators .genai-story .story-eyebrow {{
+      color:var(--magenta) !important;
+    }}
     .matrix {{
       border-color:rgba(226,232,240,.18);
       background:
@@ -1718,7 +2230,6 @@ html_doc = f"""<!doctype html>
       color:#e2e8f0;
       box-shadow:0 14px 34px rgba(0,0,0,.2);
     }}
-    .time-card,
     .node,
     .metric,
     .office,
@@ -1920,8 +2431,87 @@ html_doc = f"""<!doctype html>
       .hero-visual, .person-video {{ min-height:460px; }}
       .chapter-aside, .pyramid {{ position:relative; top:auto; }}
       .scene {{ min-height:auto; }}
-      .timeline, .stat-strip, .diff-grid, .metric-grid, .proof-grid, .service-grid, .contact-wrap, .modal-metrics {{
+      .stat-strip, .diff-grid, .metric-grid, .proof-grid, .service-grid, .contact-wrap, .modal-metrics {{
         grid-template-columns:1fr;
+      }}
+      .genai-kicker h2 {{
+        font-size:clamp(38px, 10vw, 54px);
+      }}
+      .genai-inner {{
+        width:min(100% - 32px, 720px);
+      }}
+      .genai-timeline {{
+        gap:18px;
+        padding:18px;
+      }}
+      .genai-row {{
+        grid-template-columns:1fr;
+        gap:14px;
+        min-height:0;
+      }}
+      .genai-moment {{
+        grid-template-columns:1fr 54px 34px;
+        min-height:118px;
+        padding:0;
+      }}
+      .genai-moment::before {{
+        right:16px;
+      }}
+      .moment-copy span {{
+        font-size:15px;
+      }}
+      .moment-copy strong {{
+        font-size:28px;
+      }}
+      .moment-icon {{
+        width:48px;
+        height:48px;
+      }}
+      .moment-icon.genai-stars {{
+        width:52px;
+        height:52px;
+      }}
+      .moment-dot {{
+        width:30px;
+        height:30px;
+        border-width:2px;
+      }}
+      .moment-dot::after {{
+        inset:6px;
+      }}
+      .genai-story {{
+        grid-template-columns:1fr;
+        gap:20px;
+        padding:22px;
+      }}
+      .genai-row.early-arc,
+      .genai-row.early-arc .genai-moment,
+      .genai-story.early-arc-story {{
+        min-height:0;
+      }}
+      .genai-story.early-arc-story {{
+        grid-template-columns:1fr;
+        padding:24px;
+      }}
+      .genai-story.early-arc-story h3 {{
+        font-size:26px;
+      }}
+      .genai-story.early-arc-story p:not(.story-eyebrow) {{
+        font-size:16px;
+      }}
+      .genai-logo-field.before.early-usecases {{
+        grid-template-columns:1fr;
+      }}
+      .genai-story h3 {{
+        font-size:24px;
+      }}
+      .genai-logo-field,
+      .genai-logo-field.before,
+      .genai-logo-field.agentic {{
+        display:flex;
+        justify-content:flex-start;
+        min-height:0;
+        padding:0;
       }}
       .industry-grid, .latam-list, .tbd-grid, .clouds {{
         grid-template-columns:repeat(2,1fr);
@@ -2023,6 +2613,7 @@ html_doc = f"""<!doctype html>
               <p class="source-note">Source note: Independent analysis by McKinsey and BCG conducted during the acquisition of Artefact by the investment fund Cinven.</p>
             </div>
           </article>
+          {genai_timeline_section}
           <div class="chapter-grid">
             <aside class="chapter-aside">
               <div class="eyebrow">Why Artefact</div>
@@ -2030,17 +2621,6 @@ html_doc = f"""<!doctype html>
               <p>Artefact combines a high level of specialization in Data & AI with the ability to deliver end-to-end services, including specific business expertise and Data/AI implementation.</p>
             </aside>
             <div>
-            <article class="scene">
-              <div>
-                <h2>Agents and GenAI expertise started well before the hype.</h2>
-                <p>Artefact was already working on early GenAI premises and use cases before ChatGPT. We are now supporting large players in the deployment of their Agentic programs.</p>
-                <div class="timeline">
-                  <div class="time-card reveal"><div class="time-dot"></div><h3>Before ChatGPT</h3><p>Augmented agents for call centers, product data enrichment, product entity matching, and early enterprise experimentation with GPT models.</p></div>
-                  <div class="time-card reveal"><div class="time-dot"></div><h3>2021-2023</h3><p>The acceleration of GenAI created new opportunities to design and deploy enterprise-grade AI solutions.</p></div>
-                  <div class="time-card reveal"><div class="time-dot"></div><h3>2024 onwards</h3><p>Enterprise-wide Agentic programs now design, deploy, and scale autonomous AI agents.</p></div>
-                </div>
-              </div>
-            </article>
             <article class="scene">
               <div>
                 <h2>A unique operating model bridges business depth and technical expertise.</h2>
