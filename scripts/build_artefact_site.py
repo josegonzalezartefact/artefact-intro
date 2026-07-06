@@ -2178,6 +2178,7 @@ html_doc = f"""<!doctype html>
     }}
     .presence .sticky-chapter {{
       padding-top:0;
+      padding-bottom:0;
     }}
     .presence-globe-scrolly {{
       width:100vw;
@@ -2495,6 +2496,9 @@ html_doc = f"""<!doctype html>
       place-items:center;
       isolation:isolate;
       overflow:hidden;
+      background:
+        radial-gradient(circle at 76% 34%, rgba(255,0,102,.12), transparent 36%),
+        linear-gradient(135deg,#00040c 0%, #001126 58%, #07000b 100%);
     }}
     .heineken-bottle-stage::before {{
       content:"";
@@ -2502,8 +2506,8 @@ html_doc = f"""<!doctype html>
       inset:0;
       z-index:1;
       background:
-        linear-gradient(90deg, rgba(0,4,12,.9), transparent 30%, transparent 70%, rgba(0,4,12,.76)),
-        radial-gradient(circle at 50% 50%, transparent 0 28%, rgba(0,4,12,.58) 76%);
+        linear-gradient(90deg, rgba(0,4,12,.92), rgba(0,4,12,.24) 32%, rgba(0,4,12,.16) 68%, rgba(0,4,12,.78)),
+        linear-gradient(180deg, rgba(0,4,12,.08), rgba(0,4,12,.1));
       pointer-events:none;
     }}
     .heineken-bottle-copy {{
@@ -2555,11 +2559,15 @@ html_doc = f"""<!doctype html>
       place-items:center;
       width:clamp(170px, 18vw, 280px);
       min-width:0;
-      padding:12px 0;
-      border:0;
-      background:transparent;
+      padding:12px 18px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:8px;
+      background:rgba(0,17,38,.48);
+      box-shadow:0 22px 60px rgba(0,4,12,.34), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter:blur(10px);
       cursor:pointer;
       transform:translateY(.04em);
+      transition:border-color .22s ease, background .22s ease, box-shadow .22s ease, transform .22s ease;
     }}
     .heineken-logo-link img {{
       width:100%;
@@ -2570,6 +2578,14 @@ html_doc = f"""<!doctype html>
     .heineken-logo-link:hover img,
     .heineken-logo-link:focus-visible img {{
       filter:drop-shadow(0 0 28px rgba(255,0,102,.65));
+    }}
+    .heineken-logo-link:hover,
+    .heineken-logo-link:focus-visible {{
+      border-color:rgba(255,0,102,.56);
+      background:rgba(0,17,38,.68);
+      box-shadow:0 28px 72px rgba(255,0,102,.2), inset 0 1px 0 rgba(255,255,255,.12);
+      transform:translateY(.04em) scale(1.02);
+      outline:none;
     }}
     .heineken-bottle-video-wrap {{
       position:absolute;
@@ -3986,6 +4002,8 @@ html_doc = f"""<!doctype html>
     const presenceVideo = document.querySelector("[data-presence-video]");
     const heinekenBottle = document.querySelector("[data-heineken-bottle]");
     const heinekenVideo = document.querySelector("[data-heineken-video]");
+    const heinekenTitle = document.querySelector(".heineken-history-title");
+    const heinekenBottleWrap = document.querySelector(".heineken-bottle-video-wrap");
     let targetPresenceTime = 0;
     let renderedPresenceTime = 0;
     let presenceScrubFrame = null;
@@ -4062,16 +4080,23 @@ html_doc = f"""<!doctype html>
       const progress = prefersReduced ? 1 : clamp(-rect.top / travel);
       const eased = smooth(progress);
       const bottleX = -42 + eased * 56;
-      const textProgress = smooth(clamp((progress - .1) / .56));
 
       heinekenBottle.style.setProperty("--heineken-progress", eased.toFixed(3));
       heinekenBottle.style.setProperty("--heineken-bottle-x", `${{bottleX.toFixed(2)}}vw`);
-      heinekenBottle.style.setProperty("--heineken-text-opacity", textProgress.toFixed(3));
-      heinekenBottle.style.setProperty("--heineken-text-clip", `${{((1 - textProgress) * 100).toFixed(2)}}%`);
+
+      if (heinekenTitle && heinekenBottleWrap) {{
+        const titleRect = heinekenTitle.getBoundingClientRect();
+        const bottleRect = heinekenBottleWrap.getBoundingClientRect();
+        const revealEdge = bottleRect.left + bottleRect.width * .26;
+        const revealProgress = clamp((revealEdge - titleRect.left) / Math.max(1, titleRect.width));
+        heinekenBottle.style.setProperty("--heineken-text-opacity", Math.min(1, revealProgress * 1.8).toFixed(3));
+        heinekenBottle.style.setProperty("--heineken-text-clip", `${{((1 - revealProgress) * 100).toFixed(2)}}%`);
+      }}
 
       if (heinekenVideo && heinekenVideo.duration && !prefersReduced && !heinekenVideo.seeking) {{
         heinekenVideo.pause();
-        heinekenVideo.currentTime = Math.min(heinekenVideo.duration - .05, eased * heinekenVideo.duration);
+        const reverseTime = (1 - eased) * heinekenVideo.duration;
+        heinekenVideo.currentTime = Math.min(heinekenVideo.duration - .05, Math.max(.05, reverseTime));
       }}
     }}
 
