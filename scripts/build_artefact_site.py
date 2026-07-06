@@ -82,8 +82,24 @@ def logo_without_solid_background_data_uri(path: Path, background: tuple[int, in
     return f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode('ascii')}"
 
 
-def logo_cell(name: str, src: str) -> str:
-    return f'<div class="logo-cell"><img src="{src}" alt="{html.escape(name)} logo"></div>'
+def logo_cell(name: str, src: str, categories: list[str] | None = None) -> str:
+    category_attr = ""
+    if categories:
+        category_attr = f' data-industries="{" ".join(categories)}"'
+    return f'<div class="logo-cell"{category_attr}><img src="{src}" alt="{html.escape(name)} logo"></div>'
+
+
+def industry_button(label: str, slug: str, index: int, total: int) -> str:
+    ratio = index / max(total - 1, 1)
+    start = (0, 34, 68)
+    end = (255, 0, 102)
+    color = tuple(round(start[i] + (end[i] - start[i]) * ratio) for i in range(3))
+    bg = f"rgb({color[0]}, {color[1]}, {color[2]})"
+    return (
+        f'<button class="industry" type="button" data-industry-filter="{slug}" '
+        f'style="--industry-bg:{bg};">'
+        f'<span>{html.escape(label)}</span></button>'
+    )
 
 
 def timeline_logo(name: str, path: Path | None, class_name: str = "", src: str | None = None) -> str:
@@ -147,11 +163,15 @@ def section_transition(title: str) -> str:
 
 wordmark = data_uri(ASSET_ROOT / "logos/wordmark.png")
 a_icon = data_uri(ASSET_ROOT / "icons/artefact_A_icon.png")
-person_video = data_uri(Path("/Users/jose/Documents/workshop_website/assets/videos/person.mp4"))
-section_background_video = data_uri(Path("/Users/jose/Documents/workshop_website/assets/videos/section_background.mp4"))
+person_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/person.mp4"))
+section_background_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/section_background.mp4"))
+globe_background_video = "assets/videos/globe_background.mp4"
+bottle_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/beer_green.webm"))
 platform_img = data_uri(ASSET_ROOT / "images-examples/15.png")
 flow_img = data_uri(ASSET_ROOT / "images-examples/9.png")
 stairs_img = data_uri(ASSET_ROOT / "images-examples/16.jpg")
+business_depth_img = data_uri(ASSET_ROOT / "images-examples/12.jpg")
+technical_depth_img = data_uri(ASSET_ROOT / "images-examples/15.png")
 
 consultancy_logo_files = {
     "accenture": "accenture-logo.webp",
@@ -229,29 +249,112 @@ positioning_groups = "\n".join([
     competitor_group("local", "Local specialists in various regions", 0.66, (58, 47, 28, 22), local_specialist_logos),
 ])
 
-logo_paths = [
-    ("HEINEKEN", ASSET_ROOT / "clients-logos/heineken-logo.png"),
-    ("Carrefour", ASSET_ROOT / "clients-logos/carrefour-logo.png"),
-    ("BNP Paribas", ASSET_ROOT / "clients-logos/bnp-paribas-logo.png"),
-    ("Orange", ASSET_ROOT / "clients-logos/orange-logo.png"),
-    ("Cencosud", ASSET_ROOT / "clients-logos/cencosud-logo.png"),
-    ("FEMSA", ASSET_ROOT / "clients-logos/femsa-logo.png"),
-    ("Santander", ASSET_ROOT / "clients-logos/santander-logo.png"),
-    ("Nestle", ASSET_ROOT / "clients-logos/nestle-logo.png"),
-    ("Unilever", ASSET_ROOT / "clients-logos/unilever-logo.png"),
-    ("L'Oreal", ASSET_ROOT / "clients-logos/loreal-logo.png"),
-    ("Aeromexico", ASSET_ROOT / "clients-logos/aeromexico-logo.png"),
-    ("Bupa", ASSET_ROOT / "clients-logos/bupa-logo.png"),
-    ("Danone", ASSET_ROOT / "clients-logos/danone-logo.png"),
-    ("Mondelez", ASSET_ROOT / "clients-logos/mondelez-logo.png"),
-    ("Agrosuper", ASSET_ROOT / "clients-logos/agrosuper-logo.png"),
-]
-logos = [logo_cell(name, data_uri(path)) for name, path in logo_paths if path.exists()]
-logo_track = "\n".join(logos + logos)
-
 client_logo_root = ASSET_ROOT / "clients-logos"
 consultancy_logo_root = ASSET_ROOT / "consultancy-logos"
 ai_logo_root = ASSET_ROOT / "logos"
+
+
+def client_logo_path(stem: str) -> Path:
+    return first_existing(
+        client_logo_root / stem,
+        client_logo_root / f"{stem}.png",
+        client_logo_root / f"{stem}.webp",
+        client_logo_root / f"{stem}.svg",
+    )
+
+
+def client_logo_src(stem: str) -> str:
+    path = client_logo_path(stem)
+    raw = path.read_bytes()
+    if raw.lstrip().startswith(b"<svg") or path.suffix.lower() == ".svg":
+        return data_uri(path)
+    return trimmed_png_data_uri(path)
+
+
+industry_segments = [
+    ("Financial Services", "financial", [
+        ("BNP Paribas", "bnp-paribas-logo"),
+        ("GBM", "gbm-logo"),
+        ("Livelo", "livelo-logo"),
+        ("Pacifico", "pacifico-logo"),
+        ("Prudential", "prudential-logo"),
+        ("Santander", "santander-logo"),
+        ("Visa", "visa-logo"),
+    ]),
+    ("Retail", "retail", [
+        ("Adeo", "adeo-logo"),
+        ("Burger King", "burgerking-logo"),
+        ("Carrefour", "carrefour-logo"),
+        ("Cencosud", "cencosud-logo"),
+        ("Chanel", "chanel-logo"),
+        ("El Palacio de Hierro", "el-palacio-de-hierro-logo"),
+        ("Kering", "kering-logo"),
+        ("LVMH", "lvmh-logo"),
+        ("OXXO", "oxxo-logo"),
+        ("Totto", "totto-logo"),
+    ]),
+    ("B2B & Industries", "b2b-industries", [
+        ("Bunge", "bunge-logo"),
+        ("Daikin", "daikin-logo"),
+        ("Legrand", "legrand-logo"),
+        ("Lipigas", "lipigas-logo"),
+        ("Renault", "renault-logo"),
+        ("Schneider Electric", "schneider-electric-logo"),
+        ("Socovesa", "socovesa-logo"),
+        ("SQM", "sqm-logo"),
+        ("Suez", "suez-logo"),
+        ("Suzano", "suzano-logo"),
+        ("Volcan", "volcan-logo"),
+    ]),
+    ("CPG", "cpg", [
+        ("AB InBev", "ab-inbev-logo"),
+        ("Agrosuper", "agrosuper-logo"),
+        ("Alpina", "alpina-logo"),
+        ("Beiersdorf", "beiersdorf-logo"),
+        ("Clarins", "clarins-logo"),
+        ("Coca-Cola", "coca-cola-logo"),
+        ("Danone", "danone-logo"),
+        ("FEMSA", "femsa-logo"),
+        ("Heineken", "heineken-logo"),
+        ("Hershey's", "hersheys-logo"),
+        ("L'Oreal", "loreal-logo"),
+        ("Mars", "mars-logo"),
+        ("Moet Hennessy", "moet-hennessy-logo"),
+        ("Mondelez", "mondelez-logo"),
+        ("Nestle", "nestle-logo"),
+        ("Pernod Ricard", "pernod-ricard-logo"),
+        ("Puig", "puig-logo"),
+        ("Red Bull", "redbull-logo"),
+        ("Unilever", "unilever-logo"),
+    ]),
+    ("Healthcare & Pharma", "healthcare-pharma", [
+        ("Bayer", "bayer-logo"),
+        ("Bupa", "bupa-logo"),
+        ("J&J", "j&j-logo"),
+        ("Opella", "opella-logo"),
+        ("Sanofi", "sanofi-logo"),
+    ]),
+    ("Travels, Transport & Tourism", "travel-transport-tourism", [
+        ("Aeromexico", "aeromexico-logo"),
+        ("LATAM Airlines", "latam-airlines-logo"),
+        ("Sodexo", "sodexo-logo"),
+    ]),
+    ("Others", "others", [
+        ("Grupo Salinas", "grupo-salinas-logo"),
+        ("Orange", "orange-logo"),
+        ("Tecnologico de Monterrey", "tecnologico-de-monterrey-logo"),
+    ]),
+]
+
+industry_buttons = "\n".join(
+    industry_button(label, slug, index, len(industry_segments))
+    for index, (label, slug, _) in enumerate(industry_segments)
+)
+logo_items = []
+for _, slug, items in industry_segments:
+    for name, stem in items:
+        logo_items.append(logo_cell(name, client_logo_src(stem), [slug]))
+logo_track = "\n".join(logo_items + logo_items)
 chatgpt_icon = data_uri(ai_logo_root / "chatgpt-logo.webp")
 agent_icon = data_uri(ai_logo_root / "agent-logo.png")
 genai_stars_icon = cropped_png_data_uri(ai_logo_root / "genai-logo.webp", (60, 45, 430, 400))
@@ -335,6 +438,42 @@ business = [
     "Data & AI governance",
 ]
 
+business_pills = "".join(f'<span class="venn-pill business">{item}</span>' for item in business)
+technical_pills = "".join(f'<span class="venn-pill technical">{item}</span>' for item in technical)
+
+operating_model_section = f"""
+          <article class="scene operating-venn-scene" data-venn-scrolly>
+            <div class="operating-venn-copy">
+              <div class="eyebrow">Unique operating model</div>
+              <h2>A unique operating model bridges business depth and technical expertise.</h2>
+              <p>By combining these skills, we design, build, and run AI-native solutions that deliver immediate impact and sustainable competitive advantage.</p>
+            </div>
+            <div class="operating-venn-panel">
+              <div class="venn-pillar left" aria-label="Business depth capabilities">
+                {business_pills}
+              </div>
+              <div class="venn-stage" aria-label="Business depth and technical expertise Venn diagram">
+                <div class="venn-circle venn-business">
+                  <img src="{business_depth_img}" alt="" aria-hidden="true">
+                  <div class="venn-circle-title">Business<br>Depth</div>
+                </div>
+                <div class="venn-circle venn-technical">
+                  <img src="{technical_depth_img}" alt="" aria-hidden="true">
+                  <div class="venn-circle-title">Technical<br>Expertise</div>
+                </div>
+                <div class="venn-lens">
+                  <img src="{a_icon}" alt="Artefact">
+                  <strong>AI-native solutions</strong>
+                  <span>Immediate impact and sustainable competitive advantage</span>
+                </div>
+              </div>
+              <div class="venn-pillar right" aria-label="Technical expertise capabilities">
+                {technical_pills}
+              </div>
+            </div>
+          </article>
+"""
+
 genai_timeline_section = f"""
           <article class="scene genai-scene">
             <div class="genai-inner">
@@ -402,6 +541,69 @@ genai_timeline_section = f"""
                       {genai_agentic_logos}
                     </div>
                   </div>
+                </article>
+              </div>
+            </div>
+          </article>
+"""
+
+ai_shift_section = f"""
+          <article class="scene ai-shift-section reveal">
+            <div class="ai-shift-left">
+              <div class="ai-shift-copy">
+                <h2>The <strong>AI revolution</strong> is exploding.</h2>
+              </div>
+              <div class="ai-bars" aria-label="Agentic AI adoption indicators">
+                <div class="ai-bar-wrap today" style="--bar-height:42%;">
+                  <span class="bar-timing">Today</span>
+                  <div class="ai-bar">
+                    <div class="ai-bar-fill purple">
+                      <strong data-count="37" data-suffix="%" data-count-start>37%</strong>
+                      <p>of IT executives at $1B+ companies are already deploying AI agents.</p>
+                      <small>Source: UiPath.</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="ai-bar-wrap year" style="--bar-height:62%;">
+                  <span class="bar-timing">In a year</span>
+                  <div class="ai-bar">
+                    <div class="ai-bar-fill navy">
+                      <strong data-count="83" data-suffix="%" data-count-start>83%</strong>
+                      <p>of automation leaders plan to accelerate Agentic AI investment in the next 12 months.</p>
+                      <small>Source: Forrester.</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="ai-bar-wrap future" style="--bar-height:82%;">
+                  <span class="bar-timing">By 2028</span>
+                  <div class="ai-bar">
+                    <div class="ai-bar-fill magenta">
+                      <strong data-count="33" data-suffix="%" data-count-start>33%</strong>
+                      <p>of enterprise software applications will embed Agentic AI capabilities in their solutions.</p>
+                      <small>Source: Gartner.</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="ai-shift-right">
+              <h2><img src="{wordmark}" alt="Artefact"> <span>is leading the shift<br>in the corporate space.</span></h2>
+              <div class="ai-shift-modules">
+                <article>
+                  <h3>End-to-end transformation programmes</h3>
+                  <p>Proven results of AI programmes with leading companies such as HEINEKEN, Carrefour, BNP Paribas, and Orange.</p>
+                </article>
+                <article>
+                  <h3>Processes redesign & use cases</h3>
+                  <p>Re-engineering business workflows from the ground up to integrate AI and autonomous agents natively across core corporate functions.</p>
+                </article>
+                <article>
+                  <h3>AI & Agentic AI tech foundations</h3>
+                  <p>Modular, secure, cost-effective, vendor-agnostic architectures across clouds and LLM providers, built to scale without technical debt.</p>
+                </article>
+                <article>
+                  <h3>AI readiness: adoption and operating model</h3>
+                  <p>Upskilling talents and teams to focus on AI augmentation and high-value strategic execution, shifting culture toward an AI-first mindset.</p>
                 </article>
               </div>
             </div>
@@ -768,7 +970,7 @@ html_doc = f"""<!doctype html>
       transform:translateY(-50%);
     }}
     .hero-message[data-hero-key="who"] {{
-      top:45%;
+      top:41%;
       font-size:clamp(32px, 4.35vw, 52px);
     }}
     .hero-message[data-hero-key="who"].is-visible {{
@@ -928,6 +1130,7 @@ html_doc = f"""<!doctype html>
     #differentiators .sticky-chapter {{
       background:#f8fafc;
       color:var(--ink);
+      padding-bottom:0;
     }}
     #differentiators .chapter-aside h2,
     #differentiators .scene h2,
@@ -1527,37 +1730,234 @@ html_doc = f"""<!doctype html>
       min-width:150px;
       font-size:20px;
     }}
-    .operating {{
+    .operating-venn-scene {{
+      display:block;
+      margin-top:56px;
+      padding:0;
+      border-top:0;
+      min-height:185vh;
+    }}
+    .operating-venn-copy {{
+      max-width:920px;
+      margin:0 0 12px;
+    }}
+    .operating-venn-copy h2 {{
+      max-width:850px;
+      margin-bottom:14px;
+      font-size:clamp(34px, 4vw, 54px);
+      line-height:1;
+    }}
+    .operating-venn-copy p {{
+      max-width:760px;
+      font-size:18px;
+      color:#64748b;
+    }}
+    .operating-venn-panel {{
+      position:sticky;
+      top:48px;
       display:grid;
-      grid-template-columns:1fr 260px 1fr;
-      gap:22px;
+      grid-template-columns:minmax(180px, .72fr) minmax(520px, 1.55fr) minmax(180px, .72fr);
+      gap:24px;
       align-items:center;
+      min-height:650px;
+      padding:36px;
+      border-radius:24px;
+      background:
+        radial-gradient(circle at 50% 22%, rgba(255,0,102,.08), transparent 28%),
+        linear-gradient(180deg, #fff 0%, #f8fafc 100%);
+      border:1px solid rgba(226,232,240,.9);
+      box-shadow:0 36px 90px rgba(0,5,16,.32);
+      overflow:hidden;
     }}
-    .node-list {{
+    .operating-venn-panel::after {{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:18px;
+      width:120px;
+      height:5px;
+      border-radius:999px;
+      transform:translateX(-50%);
+      background:linear-gradient(90deg, rgba(0,34,68,.38), rgba(255,0,102,.78));
+      opacity:.48;
+    }}
+    .venn-pillar {{
+      position:relative;
+      z-index:4;
       display:grid;
-      gap:12px;
+      gap:16px;
     }}
-    .node {{
-      padding:13px 14px;
-      border:1px solid var(--line);
-      border-radius:8px;
-      background:#fff;
-      color:var(--body);
-      font-weight:700;
-      font-size:14px;
-    }}
-    .core {{
-      min-height:260px;
+    .venn-pillar.left {{ justify-items:end; }}
+    .venn-pillar.right {{ justify-items:start; }}
+    .venn-pill {{
       display:grid;
       place-items:center;
-      text-align:center;
+      min-height:62px;
+      width:min(100%, 250px);
+      padding:14px 18px;
+      border-radius:10px;
       color:#fff;
-      padding:26px;
-      border-radius:50%;
-      background:var(--grad);
-      box-shadow:var(--shadow);
+      text-align:center;
+      font-size:16px;
+      line-height:1.16;
+      font-weight:800;
+      box-shadow:0 18px 42px rgba(15,23,42,.14);
+      transition:opacity .55s ease, transform .55s ease, filter .55s ease;
     }}
-    .core img {{ width:64px; margin:0 auto 12px; filter:drop-shadow(0 8px 14px rgba(0,0,0,.18)); }}
+    .venn-pill.business {{
+      background:linear-gradient(135deg, #ff0066, #d90063);
+    }}
+    .venn-pill.technical {{
+      background:linear-gradient(135deg, #273275, #0d1f56);
+    }}
+    .venn-stage {{
+      position:relative;
+      min-height:520px;
+      isolation:isolate;
+      transform:translateY(24px);
+    }}
+    .venn-circle {{
+      position:absolute;
+      top:54px;
+      width:58%;
+      aspect-ratio:1;
+      border-radius:50%;
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      border:2px solid rgba(255,255,255,.78);
+      box-shadow:0 26px 80px rgba(15,23,42,.17);
+      transition:opacity .45s ease, transform .45s cubic-bezier(.22,1,.36,1), filter .45s ease;
+    }}
+    .venn-circle img {{
+      position:absolute;
+      inset:-8%;
+      width:116%;
+      height:116%;
+      object-fit:cover;
+      opacity:.18;
+      filter:saturate(1.08) contrast(1.06);
+      mix-blend-mode:normal;
+    }}
+    .venn-business {{
+      left:4%;
+      background:linear-gradient(135deg, rgba(255,0,102,.94), rgba(198,0,96,.91));
+    }}
+    .venn-technical {{
+      right:4%;
+      background:linear-gradient(135deg, rgba(39,50,117,.93), rgba(0,34,68,.94));
+    }}
+    .venn-circle-title {{
+      position:absolute;
+      z-index:2;
+      top:50%;
+      max-width:136px;
+      color:#fff;
+      text-align:center;
+      font-size:clamp(19px, 1.65vw, 23px);
+      font-weight:900;
+      line-height:1.05;
+      text-transform:uppercase;
+      letter-spacing:.02em;
+      text-shadow:0 12px 28px rgba(0,0,0,.22);
+    }}
+    .venn-business .venn-circle-title {{
+      left:8%;
+      transform:translateY(-50%);
+    }}
+    .venn-technical .venn-circle-title {{
+      right:6%;
+      transform:translateY(-50%);
+    }}
+    .venn-lens {{
+      position:absolute;
+      z-index:5;
+      left:50%;
+      top:41%;
+      width:28%;
+      min-width:180px;
+      aspect-ratio:.82 / 1;
+      transform:translate(-50%, -50%);
+      display:grid;
+      align-content:center;
+      justify-items:center;
+      gap:10px;
+      padding:24px 18px;
+      border-radius:50%;
+      background:
+        radial-gradient(circle at 50% 12%, rgba(255,255,255,.28), transparent 32%),
+        linear-gradient(160deg, rgba(117,46,125,.94), rgba(54,40,104,.97));
+      border:1px solid rgba(255,255,255,.7);
+      color:#fff;
+      text-align:center;
+      box-shadow:0 24px 76px rgba(15,23,42,.26);
+      transition:opacity .45s ease, transform .45s cubic-bezier(.22,1,.36,1), filter .45s ease;
+    }}
+    .venn-lens img {{
+      width:74px;
+      filter:brightness(0) invert(1) drop-shadow(0 12px 18px rgba(255,255,255,.2));
+    }}
+    .venn-lens strong {{
+      display:block;
+      font-size:20px;
+      line-height:1.06;
+    }}
+    .venn-lens span {{
+      display:none;
+      max-width:180px;
+      color:#e2e8f0;
+      font-size:13px;
+      font-weight:700;
+      line-height:1.3;
+    }}
+    .js-enabled .operating-venn-scene .venn-pill,
+    .js-enabled .operating-venn-scene .venn-circle,
+    .js-enabled .operating-venn-scene .venn-lens {{
+      opacity:0;
+      filter:blur(8px);
+      pointer-events:none;
+    }}
+    .js-enabled .operating-venn-scene .venn-pill.business,
+    .js-enabled .operating-venn-scene .venn-business {{
+      transform:translateX(-28px) scale(.96);
+    }}
+    .js-enabled .operating-venn-scene .venn-pill.technical,
+    .js-enabled .operating-venn-scene .venn-technical {{
+      transform:translateX(28px) scale(.96);
+    }}
+    .js-enabled .operating-venn-scene .venn-lens {{
+      transform:translate(-50%, -50%) scale(.88);
+    }}
+    .js-enabled .operating-venn-scene.venn-step-1 .venn-pill.business,
+    .js-enabled .operating-venn-scene.venn-step-1 .venn-business,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-pill.business,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-business,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-pill.business,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-business,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-pill.technical,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-technical,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-pill.technical,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-technical,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-lens {{
+      opacity:1;
+      filter:none;
+      pointer-events:auto;
+    }}
+    .js-enabled .operating-venn-scene.venn-step-1 .venn-pill.business,
+    .js-enabled .operating-venn-scene.venn-step-1 .venn-business,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-pill.business,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-business,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-pill.business,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-business,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-pill.technical,
+    .js-enabled .operating-venn-scene.venn-step-2 .venn-technical,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-pill.technical,
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-technical {{
+      transform:none;
+    }}
+    .js-enabled .operating-venn-scene.venn-step-3 .venn-lens {{
+      transform:translate(-50%, -50%) scale(1);
+    }}
     .stat-strip {{
       display:grid;
       grid-template-columns:repeat(3,1fr);
@@ -1581,8 +1981,336 @@ html_doc = f"""<!doctype html>
       gap:18px;
       margin-top:28px;
     }}
+    .ai-shift-section {{
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      min-height:100svh;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      align-items:stretch;
+      padding:0;
+      border-top:0;
+      background:#fff;
+      overflow:hidden;
+    }}
+    .ai-shift-left {{
+      min-height:100svh;
+      display:grid;
+      grid-template-rows:.28fr .72fr;
+      align-items:stretch;
+      gap:18px;
+      padding:clamp(36px, 4.8vw, 58px) clamp(28px, 4.2vw, 60px) clamp(30px, 4vw, 48px);
+      color:var(--ink);
+      background:#fff;
+    }}
+    .ai-shift-copy {{
+      display:grid;
+      align-items:center;
+    }}
+    .ai-shift-copy h2 {{
+      max-width:620px;
+      margin:0;
+      color:var(--navy) !important;
+      font-size:clamp(34px, 3.7vw, 54px);
+      font-weight:400;
+      line-height:1.08;
+      letter-spacing:0;
+    }}
+    .ai-shift-copy strong {{
+      font-weight:900;
+    }}
+    .ai-bars {{
+      align-self:end;
+      display:grid;
+      grid-template-columns:1fr 1.15fr 1.15fr;
+      align-items:end;
+      gap:0;
+      min-height:440px;
+      max-width:780px;
+    }}
+    .ai-bar-wrap {{
+      display:grid;
+      grid-template-rows:auto minmax(0, 1fr);
+      align-items:end;
+      min-width:0;
+    }}
+    .bar-timing {{
+      display:block;
+      margin:0 0 14px;
+      color:#525a66;
+      font-size:17px;
+      font-weight:900;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+    }}
+    .ai-bar {{
+      position:relative;
+      height:410px;
+      display:flex;
+      align-items:flex-end;
+    }}
+    .ai-bar-fill {{
+      width:100%;
+      height:var(--bar-height);
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:7px;
+      padding:18px 17px;
+      color:#fff;
+      transform:scaleY(.02);
+      transform-origin:bottom;
+      transition:transform 1.05s cubic-bezier(.22,1,.36,1);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);
+    }}
+    .ai-bar-fill.purple {{ background:#493d86; }}
+    .ai-bar-fill.navy {{ background:#002b73; }}
+    .ai-bar-fill.magenta {{ background:#e80b78; }}
+    .ai-shift-section.visible .ai-bar-fill {{
+      transform:scaleY(1);
+    }}
+    .ai-bar-fill strong {{
+      display:block;
+      align-self:flex-end;
+      color:#fff;
+      font-size:clamp(30px, 2.7vw, 44px);
+      font-weight:900;
+      line-height:1;
+    }}
+    .ai-bar-fill p {{
+      margin:0;
+      color:#fff;
+      font-size:clamp(13px, 1.05vw, 17px);
+      font-weight:800;
+      line-height:1.18;
+      text-align:center;
+    }}
+    .ai-bar-fill small {{
+      color:rgba(255,255,255,.88);
+      font-size:clamp(11px, .9vw, 14px);
+      font-weight:800;
+      line-height:1.2;
+      text-align:center;
+    }}
+    .today .ai-bar-fill {{
+      padding:14px 12px;
+      gap:6px;
+    }}
+    .today .ai-bar-fill strong {{
+      font-size:clamp(28px, 2.35vw, 38px);
+    }}
+    .today .ai-bar-fill p {{
+      font-size:clamp(11px, .9vw, 14px);
+      line-height:1.12;
+    }}
+    .today .ai-bar-fill small {{
+      font-size:clamp(12px, .95vw, 14px);
+    }}
+    .ai-shift-right {{
+      min-height:100svh;
+      display:grid;
+      grid-template-rows:.28fr .72fr;
+      align-items:stretch;
+      gap:26px;
+      padding:clamp(36px, 4.8vw, 58px) clamp(28px, 4.2vw, 60px);
+      background:
+        linear-gradient(180deg, rgba(255,0,102,.94) 0%, rgba(117,46,125,.9) 42%, rgba(0,34,68,1) 100%);
+      color:#fff;
+    }}
+    .ai-shift-right h2 {{
+      margin:0;
+      align-self:center;
+      color:#fff !important;
+      text-align:center;
+      font-size:clamp(28px, 2.55vw, 42px);
+      font-weight:400;
+      line-height:1.08;
+    }}
+    .ai-shift-right h2 img {{
+      display:inline-block;
+      width:min(230px, 28vw);
+      margin:0 10px -8px 0;
+      filter:brightness(0) invert(1);
+    }}
+    .ai-shift-right h2 span {{
+      display:inline;
+    }}
+    .ai-shift-modules {{
+      display:grid;
+      gap:14px;
+      align-self:start;
+    }}
+    .ai-shift-modules article {{
+      padding:14px 20px;
+      border-radius:14px;
+      background:#fff;
+      color:#0f172a;
+      text-align:center;
+      border:1px solid rgba(15,23,42,.22);
+      box-shadow:0 12px 24px rgba(0,0,0,.26);
+      opacity:0;
+      transform:translateY(26px);
+      transition:opacity .7s ease, transform .7s cubic-bezier(.22,1,.36,1);
+    }}
+    .ai-shift-section.visible .ai-shift-modules article {{
+      opacity:1;
+      transform:none;
+    }}
+    .ai-shift-section.visible .ai-shift-modules article:nth-child(2) {{ transition-delay:.08s; }}
+    .ai-shift-section.visible .ai-shift-modules article:nth-child(3) {{ transition-delay:.16s; }}
+    .ai-shift-section.visible .ai-shift-modules article:nth-child(4) {{ transition-delay:.24s; }}
+    .ai-shift-modules h3 {{
+      margin:0 0 6px;
+      color:#05070d;
+      font-size:clamp(16px, 1.18vw, 20px);
+      line-height:1.08;
+      text-transform:uppercase;
+      letter-spacing:0;
+    }}
+    .ai-shift-modules p {{
+      margin:0;
+      color:#111827;
+      font-size:clamp(13px, 1.08vw, 18px);
+      line-height:1.18;
+    }}
     .presence {{
       background:var(--soft);
+    }}
+    .presence .sticky-chapter {{
+      padding-top:0;
+    }}
+    .presence-globe-scrolly {{
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      min-height:188vh;
+      border-radius:0;
+      overflow:clip;
+      background:#00040c;
+      color:#fff;
+    }}
+    .presence-globe-stage {{
+      position:sticky;
+      top:0;
+      min-height:100svh;
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) minmax(420px, 1fr);
+      align-items:stretch;
+      isolation:isolate;
+      background:#00040c;
+    }}
+    .presence-globe-visual {{
+      position:relative;
+      min-height:100svh;
+      overflow:hidden;
+      background:#00040c;
+    }}
+    .presence-globe-visual video {{
+      position:absolute;
+      inset:-3% -6% -3% -2%;
+      width:108%;
+      height:106%;
+      object-fit:cover;
+      object-position:center center;
+      opacity:calc(.72 + (var(--presence-progress, 0) * .18));
+      filter:saturate(1.04) contrast(1.1) brightness(calc(.58 + (var(--presence-progress, 0) * .14)));
+      transform:scale(calc(1.04 - (var(--presence-progress, 0) * .018))) translate3d(calc(20px - (var(--presence-progress, 0) * 8px)), 0, 0);
+      will-change:transform, filter, opacity;
+    }}
+    .presence-globe-visual::after {{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(90deg, rgba(0,4,12,.04) 0%, rgba(0,4,12,.08) 56%, #00040c 100%),
+        radial-gradient(circle at 78% 50%, rgba(0,4,12,.18), rgba(0,4,12,.72) 74%);
+      pointer-events:none;
+    }}
+    .presence-globe-copy {{
+      min-height:100svh;
+      display:grid;
+      align-content:center;
+      padding:clamp(48px, 7vw, 92px) clamp(34px, 7vw, 104px) clamp(42px, 6vw, 76px) clamp(28px, 4.6vw, 76px);
+      background:
+        radial-gradient(circle at 72% 22%, rgba(255,0,102,.14), transparent 30%),
+        linear-gradient(90deg, rgba(0,4,12,.74), #00040c 28%, #00040c 100%);
+    }}
+    .presence-globe-copy .eyebrow {{
+      color:var(--magenta);
+      margin-bottom:10px;
+    }}
+    .presence-globe-copy h2 {{
+      margin:0;
+      max-width:720px;
+      color:#fff;
+      font-size:clamp(40px, 4.7vw, 72px);
+      line-height:1.04;
+      letter-spacing:0;
+      font-weight:400;
+    }}
+    .globe-metrics {{
+      display:grid;
+      gap:18px;
+      margin-top:clamp(38px, 8vh, 84px);
+      max-width:560px;
+      justify-self:end;
+    }}
+    .globe-metric {{
+      display:flex;
+      align-items:baseline;
+      justify-content:flex-end;
+      gap:13px;
+      opacity:0;
+      transform:translate3d(0, 16px, 0);
+      transition:opacity .66s ease, transform .66s cubic-bezier(.22,1,.36,1);
+    }}
+    .globe-metric.is-visible {{
+      opacity:1;
+      transform:translate3d(0, 0, 0);
+    }}
+    .globe-metric strong {{
+      color:#fff;
+      font-size:clamp(36px, 4vw, 58px);
+      line-height:.94;
+      font-weight:900;
+      letter-spacing:0;
+      transition:color .36s ease;
+    }}
+    .globe-metric span {{
+      color:#f8fafc;
+      font-size:clamp(22px, 2.35vw, 38px);
+      line-height:1;
+      font-weight:400;
+      transition:color .36s ease;
+    }}
+    .globe-metric.is-visible strong,
+    .globe-metric.is-visible span {{
+      color:var(--magenta);
+    }}
+    .globe-latam {{
+      margin-top:30px;
+      padding-top:26px;
+      border-top:1px solid rgba(255,255,255,0);
+      opacity:0;
+      transform:translate3d(0, 16px, 0);
+      transition:opacity .72s ease, transform .72s cubic-bezier(.22,1,.36,1), border-color .72s ease;
+    }}
+    .globe-latam.is-visible {{
+      opacity:1;
+      transform:translate3d(0, 0, 0);
+      border-color:rgba(255,255,255,.16);
+    }}
+    .globe-latam strong {{
+      display:block;
+      color:#fff;
+      font-size:clamp(28px, 3vw, 44px);
+      line-height:1.04;
+      margin-bottom:14px;
+    }}
+    .globe-latam p {{
+      margin:0;
+      color:#cbd5e1;
+      font-size:clamp(16px, 1.25vw, 21px);
+      line-height:1.45;
     }}
     .map-panel {{
       min-height:620px;
@@ -1659,51 +2387,215 @@ html_doc = f"""<!doctype html>
     }}
     .industry-grid {{
       display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:10px;
-      margin:26px 0;
+      grid-template-columns:repeat(7,minmax(0,1fr));
+      gap:12px;
+      margin:30px 0 34px;
     }}
     .industry {{
-      min-height:58px;
+      min-height:96px;
       display:flex;
       align-items:center;
-      padding:12px;
+      justify-content:center;
+      padding:16px 14px;
       border-radius:8px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--body);
-      font-weight:700;
-      font-size:14px;
+      border:0;
+      background:var(--industry-bg, #002244);
+      color:#fff;
+      font:inherit;
+      font-weight:900;
+      font-size:clamp(12px, .86vw, 15px);
+      line-height:1.14;
+      text-align:center;
+      box-shadow:0 18px 38px rgba(15,23,42,.14);
+      cursor:pointer;
+      transition:transform .22s ease, box-shadow .22s ease, filter .22s ease;
+    }}
+    .industry:hover,
+    .industry:focus-visible {{
+      transform:translateY(-3px);
+      box-shadow:0 24px 48px rgba(15,23,42,.2);
+      filter:saturate(1.08);
+    }}
+    .industry.is-active {{
+      box-shadow:0 0 0 3px rgba(255,0,102,.22), 0 24px 48px rgba(15,23,42,.2);
+    }}
+    .industry span {{
+      display:block;
     }}
     .logo-marquee {{
       overflow:hidden;
       border:1px solid var(--line);
       border-radius:8px;
       background:#fff;
-      padding:18px 0;
+      padding:22px 0;
       mask-image:linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
     }}
     .logo-track {{
       display:flex;
       width:max-content;
-      animation:marquee 36s linear infinite;
+      animation:marquee 96s linear infinite;
+    }}
+    .logo-marquee.is-filtered .logo-track {{
+      animation-duration:24s;
     }}
     .logo-marquee:hover .logo-track {{ animation-play-state:paused; }}
     .logo-cell {{
       width:172px;
-      height:68px;
+      height:76px;
       display:grid;
       place-items:center;
-      padding:14px 22px;
-      filter:grayscale(1);
-      opacity:.78;
-      transition:filter .2s ease, opacity .2s ease;
+      flex:0 0 172px;
+      padding:15px 24px;
+      opacity:1;
+      transition:opacity .22s ease, transform .22s ease;
     }}
-    .logo-cell:hover {{ filter:grayscale(0); opacity:1; }}
+    .logo-cell.is-filtered-out {{ display:none; }}
+    .logo-cell:hover {{ transform:translateY(-2px); }}
     .logo-cell img {{
-      max-height:40px;
-      max-width:126px;
+      max-height:46px;
+      max-width:132px;
       object-fit:contain;
+    }}
+    .presence-after-globe {{
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      padding:92px 0 84px;
+      background:#fff;
+      color:var(--ink);
+    }}
+    .presence-after-inner {{
+      width:min(1180px, calc(100% - 48px));
+      margin:0 auto;
+    }}
+    .presence-after-inner h2 {{
+      color:var(--ink);
+      max-width:900px;
+    }}
+    .presence-after-inner p {{
+      max-width:1040px;
+      color:#475569;
+    }}
+    .heineken-bottle-scrolly {{
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      min-height:176vh;
+      overflow:clip;
+      background:
+        radial-gradient(circle at 72% 30%, rgba(255,0,102,.13), transparent 32%),
+        radial-gradient(circle at 18% 70%, rgba(0,34,68,.34), transparent 38%),
+        linear-gradient(135deg,#00040c 0%, #001126 56%, #08000d 100%);
+      color:#fff;
+      border-top:0;
+    }}
+    .heineken-bottle-stage {{
+      position:sticky;
+      top:0;
+      min-height:100svh;
+      display:grid;
+      place-items:center;
+      isolation:isolate;
+      overflow:hidden;
+    }}
+    .heineken-bottle-stage::before {{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background:
+        linear-gradient(90deg, rgba(0,4,12,.9), transparent 30%, transparent 70%, rgba(0,4,12,.76)),
+        radial-gradient(circle at 50% 50%, transparent 0 28%, rgba(0,4,12,.58) 76%);
+      pointer-events:none;
+    }}
+    .heineken-bottle-copy {{
+      position:absolute;
+      z-index:5;
+      top:clamp(72px, 10vh, 110px);
+      left:min(8vw, 110px);
+      width:min(680px, calc(100% - 48px));
+      opacity:calc(.35 + (var(--heineken-progress, 0) * .65));
+      transform:translate3d(0, calc(22px - (var(--heineken-progress, 0) * 22px)), 0);
+    }}
+    .heineken-bottle-copy h2 {{
+      margin:0;
+      color:var(--magenta);
+      font-size:clamp(13px, 1.35vw, 21px);
+      line-height:1;
+      font-weight:500;
+      letter-spacing:.01em;
+      text-transform:uppercase;
+    }}
+    .heineken-history-title {{
+      position:relative;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:clamp(16px, 2.4vw, 34px);
+      margin:0;
+      width:min(1180px, calc(100% - 48px));
+      color:rgba(255,255,255,.68);
+      font-size:clamp(34px, 4.72vw, 80px);
+      line-height:.94;
+      letter-spacing:0;
+      font-weight:900;
+      opacity:var(--heineken-text-opacity, 0);
+      clip-path:inset(0 var(--heineken-text-clip, 100%) 0 0);
+      transition:opacity .18s linear;
+      pointer-events:auto;
+      text-shadow:0 22px 70px rgba(0,5,16,.48);
+      transform:translateX(clamp(-120px, -6vw, -52px));
+    }}
+    .heineken-history-title span {{
+      display:block;
+      white-space:nowrap;
+    }}
+    .heineken-logo-link {{
+      appearance:none;
+      display:grid;
+      place-items:center;
+      width:clamp(170px, 18vw, 280px);
+      min-width:0;
+      padding:12px 0;
+      border:0;
+      background:transparent;
+      cursor:pointer;
+      transform:translateY(.04em);
+    }}
+    .heineken-logo-link img {{
+      width:100%;
+      max-height:clamp(50px, 7vw, 96px);
+      object-fit:contain;
+      filter:drop-shadow(0 18px 42px rgba(255,0,102,.34));
+    }}
+    .heineken-logo-link:hover img,
+    .heineken-logo-link:focus-visible img {{
+      filter:drop-shadow(0 0 28px rgba(255,0,102,.65));
+    }}
+    .heineken-bottle-video-wrap {{
+      position:absolute;
+      z-index:3;
+      left:50%;
+      top:auto;
+      bottom:0;
+      width:min(38.4vw, 608px);
+      height:min(92.8svh, 832px);
+      min-width:416px;
+      transform:translate3d(var(--heineken-bottle-x, -34vw), 0, 0);
+      transform-origin:center;
+      pointer-events:none;
+      filter:drop-shadow(0 36px 80px rgba(255,0,102,.38));
+      will-change:transform;
+    }}
+    .heineken-bottle-video-wrap::after {{
+      display:none;
+    }}
+    .heineken-bottle-video {{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+      filter:hue-rotate(240deg) saturate(2.45) contrast(1.14) brightness(1.02);
+      mix-blend-mode:normal;
     }}
     .heineken-trigger {{
       margin-top:28px;
@@ -2233,7 +3125,6 @@ html_doc = f"""<!doctype html>
     .node,
     .metric,
     .office,
-    .industry,
     .contact-card {{
       background:rgba(255,255,255,.06);
       border-color:rgba(226,232,240,.18);
@@ -2259,11 +3150,11 @@ html_doc = f"""<!doctype html>
       border-color:rgba(226,232,240,.16);
     }}
     .logo-cell {{
-      background:rgba(255,255,255,.92);
+      background:#fff;
       border-radius:8px;
       margin:0 7px;
-      filter:grayscale(1);
-      opacity:.86;
+      filter:none;
+      opacity:1;
     }}
     .offering {{ background:transparent; }}
     .pyramid {{
@@ -2425,8 +3316,146 @@ html_doc = f"""<!doctype html>
         top:-.08em;
         font-size:1.72em;
       }}
-      .hero-grid, .chapter-grid, .positioning, .operating, .map-panel, .pillar-wrap, .ecosystem, .event-grid {{
+      .hero-grid, .chapter-grid, .positioning, .map-panel, .pillar-wrap, .ecosystem, .event-grid {{
         grid-template-columns:1fr;
+      }}
+      .presence-globe-scrolly {{
+        min-height:168vh;
+      }}
+      .presence-globe-stage {{
+        grid-template-columns:1fr;
+      }}
+      .presence-globe-visual {{
+        position:absolute;
+        inset:0;
+        min-height:100%;
+      }}
+      .presence-globe-visual video {{
+        inset:-2% -26% 22% -18%;
+        width:144%;
+        height:82%;
+        opacity:.52;
+      }}
+      .presence-globe-visual::after {{
+        background:
+          linear-gradient(180deg, rgba(0,4,12,.08) 0%, #00040c 58%, #00040c 100%),
+          radial-gradient(circle at 50% 24%, transparent 0 22%, rgba(0,4,12,.72) 76%);
+      }}
+      .presence-globe-copy {{
+        position:relative;
+        z-index:1;
+        padding:112px 24px 56px;
+        background:linear-gradient(180deg, rgba(0,4,12,.38), #00040c 62%);
+      }}
+      .globe-metrics {{
+        justify-self:stretch;
+      }}
+      .globe-metric {{
+        justify-content:flex-start;
+      }}
+      .heineken-bottle-scrolly {{
+        min-height:150vh;
+      }}
+      .heineken-bottle-copy {{
+        top:88px;
+        left:24px;
+      }}
+      .heineken-history-title {{
+        flex-direction:column;
+        gap:8px;
+        align-items:flex-start;
+        justify-content:center;
+        font-size:clamp(30px, 10.4vw, 58px);
+        transform:translateX(-18px);
+      }}
+      .heineken-logo-link {{
+        width:min(300px, 72vw);
+      }}
+      .heineken-bottle-video-wrap {{
+        width:min(69vw, 368px);
+        height:74svh;
+        min-width:208px;
+        top:auto;
+        bottom:0;
+      }}
+      .operating-venn-scene {{
+        margin-top:40px;
+        min-height:auto;
+      }}
+      .operating-venn-copy h2 {{
+        font-size:clamp(32px, 9vw, 48px);
+      }}
+      .operating-venn-panel {{
+        position:relative;
+        top:auto;
+        grid-template-columns:1fr;
+        min-height:0;
+        padding:22px;
+        gap:22px;
+        border-radius:18px;
+      }}
+      .venn-stage {{
+        grid-row:1;
+        min-height:430px;
+        transform:none;
+      }}
+      .venn-pillar {{
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        gap:12px;
+      }}
+      .venn-pillar.left,
+      .venn-pillar.right {{
+        justify-items:stretch;
+      }}
+      .venn-pill {{
+        width:100%;
+        min-height:56px;
+        font-size:14px;
+        padding:12px 14px;
+      }}
+      .venn-circle {{
+        width:64%;
+        top:38px;
+      }}
+      .venn-business {{ left:0; }}
+      .venn-technical {{ right:0; }}
+      .venn-lens {{
+        width:38%;
+        min-width:190px;
+      }}
+      .venn-lens img {{
+        width:68px;
+      }}
+      .venn-lens strong {{
+        font-size:18px;
+      }}
+      .venn-lens span {{
+        font-size:12px;
+      }}
+      .ai-shift-section {{
+        grid-template-columns:1fr;
+        min-height:0;
+      }}
+      .ai-shift-left,
+      .ai-shift-right {{
+        min-height:auto;
+        padding:48px 24px;
+      }}
+      .ai-bars {{
+        min-height:480px;
+        max-width:none;
+      }}
+      .ai-bar {{
+        height:430px;
+      }}
+      .ai-bar-fill {{
+        padding:20px 16px;
+      }}
+      .ai-shift-right {{
+        gap:28px;
+      }}
+      .ai-shift-right h2 img {{
+        width:min(280px, 70vw);
       }}
       .hero-visual, .person-video {{ min-height:460px; }}
       .chapter-aside, .pyramid {{ position:relative; top:auto; }}
@@ -2541,6 +3570,55 @@ html_doc = f"""<!doctype html>
       }}
       .transition-title h2 {{ font-size:clamp(38px, 13vw, 58px); }}
       .industry-grid, .latam-list, .tbd-grid, .previous, .clouds {{ grid-template-columns:1fr; }}
+      .operating-venn-panel {{ padding:16px; }}
+      .ai-shift-left,
+      .ai-shift-right {{
+        padding:40px 18px;
+      }}
+      .ai-bars {{
+        grid-template-columns:1fr;
+        gap:14px;
+        min-height:0;
+      }}
+      .ai-bar-wrap {{
+        grid-template-columns:94px minmax(0, 1fr);
+        grid-template-rows:1fr;
+        align-items:center;
+        gap:10px;
+      }}
+      .bar-timing {{
+        margin:0;
+        font-size:13px;
+      }}
+      .ai-bar {{
+        height:180px;
+      }}
+      .ai-bar-fill {{
+        min-height:150px;
+      }}
+      .venn-stage {{ min-height:350px; }}
+      .venn-pillar {{ grid-template-columns:1fr; }}
+      .venn-circle {{
+        width:69%;
+        top:34px;
+      }}
+      .venn-circle-title {{
+        display:none;
+      }}
+      .venn-lens {{
+        width:42%;
+        min-width:150px;
+        padding:20px 14px;
+      }}
+      .venn-lens img {{ width:52px; }}
+      .venn-lens strong {{ font-size:15px; }}
+      .venn-lens span {{ display:none; }}
+      .heineken-bottle-copy h2 {{ font-size:clamp(12px, 4vw, 21px); }}
+      .heineken-bottle-video-wrap {{
+        width:83vw;
+        height:70svh;
+        opacity:.92;
+      }}
       .modal-body {{ padding:22px; }}
       footer .container {{ align-items:flex-start; flex-direction:column; }}
     }}
@@ -2613,45 +3691,10 @@ html_doc = f"""<!doctype html>
               <p class="source-note">Source note: Independent analysis by McKinsey and BCG conducted during the acquisition of Artefact by the investment fund Cinven.</p>
             </div>
           </article>
+          {operating_model_section}
           {genai_timeline_section}
-          <div class="chapter-grid">
-            <aside class="chapter-aside">
-              <div class="eyebrow">Why Artefact</div>
-              <h2>The leading pure player turns AI ambition into deployed business value.</h2>
-              <p>Artefact combines a high level of specialization in Data & AI with the ability to deliver end-to-end services, including specific business expertise and Data/AI implementation.</p>
-            </aside>
-            <div>
-            <article class="scene">
-              <div>
-                <h2>A unique operating model bridges business depth and technical expertise.</h2>
-                <div class="operating">
-                  <div class="node-list reveal">{''.join(f'<div class="node">{item}</div>' for item in business)}</div>
-                  <div class="core reveal"><div><img src="{a_icon}" alt=""><strong>AI-native solutions that deliver immediate impact and sustainable competitive advantage.</strong></div></div>
-                  <div class="node-list reveal">{''.join(f'<div class="node">{item}</div>' for item in technical)}</div>
-                </div>
-              </div>
-            </article>
-            <article class="scene">
-              <div>
-                <h2>The AI revolution is exploding, and Artefact is leading the shift in the corporate space.</h2>
-                <div class="stat-strip">
-                  <div class="source-card reveal"><span class="num">37%</span><p>of IT executives at $1B+ companies are already deploying AI agents.</p><p class="source-note">Source: UiPath.</p></div>
-                  <div class="source-card reveal"><span class="num">83%</span><p>of automation leaders plan to accelerate Agentic AI investment in the next 12 months.</p><p class="source-note">Source: Forrester.</p></div>
-                  <div class="source-card reveal"><span class="num">33%</span><p>of enterprise software applications will embed Agentic AI capabilities in their solutions by 2028.</p><p class="source-note">Source: Gartner.</p></div>
-                </div>
-                <div class="diff-grid">
-                  {card("AI & Agentic Pure Player", "Unlike other consultancies, we do not split focus. We master the bleeding edge of Agentic & AI solutions to deliver end-to-end, state-of-the-art, value-driven solutions.")}
-                  {card("Business-First Depth", "We solve real business problems. We understand industry-specific workflows, creating alignment of interest through outcome-based commitment.")}
-                  {card("Anti-Vendor Lock-In", "We preserve your intellectual independence and prevent dependence on a single tech provider to run core corporate processes.")}
-                  {card("All Clouds & LLM Providers", "We design completely agnostic architectures across Google, AWS, Microsoft, and any foundational or LLM tool.")}
-                  {card("The Power Of The Harness", "Models are becoming commodities. Our value sits in clean data environments, integrations, orchestration, and guardrails.")}
-                  {card("Designed For Portability", "We architect multi-provider portability for technology, regulation, geopolitics, and national-security volatility.")}
-                </div>
-              </div>
-            </article>
-          </div>
+          {ai_shift_section}
         </div>
-      </div>
       </div>
     </section>
 
@@ -2659,48 +3702,53 @@ html_doc = f"""<!doctype html>
       {section_transition("Presence")}
       <div class="sticky-chapter">
         <div class="container">
-          <div class="map-panel reveal">
-            <div class="world">
-              <img src="{platform_img}" alt="">
-              <svg class="map-svg" viewBox="0 0 900 430" role="img" aria-label="Global and LATAM footprint">
-                <path d="M108 120 C166 72 234 76 302 110 C362 138 395 108 442 92 C514 66 608 74 690 116 C778 160 806 234 756 292 C708 348 602 350 516 310 C452 280 408 276 344 316 C258 368 142 348 82 284 C28 226 48 164 108 120Z" fill="rgba(255,255,255,.14)" stroke="rgba(255,255,255,.55)" stroke-width="2"/>
-                <circle class="pulse" cx="314" cy="282" r="18" fill="#ff0066"/>
-                <circle cx="314" cy="282" r="5" fill="#fff"/>
-                <path d="M314 282 C390 230 514 222 626 170" fill="none" stroke="#ff0066" stroke-width="3" stroke-dasharray="8 8"/>
-                <path d="M314 282 C260 210 205 180 145 146" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="7 8" opacity=".7"/>
-              </svg>
-            </div>
-            <div>
+          <article class="presence-globe-scrolly reveal" data-presence-globe>
+            <div class="presence-globe-stage">
+              <div class="presence-globe-visual" aria-hidden="true">
+                <video data-presence-video muted playsinline preload="auto" src="{globe_background_video}"></video>
+              </div>
+              <div class="presence-globe-copy">
               <div class="eyebrow">Global footprint</div>
               <h2>Artefact operates globally and scales with LATAM depth.</h2>
-              <p>Artefact is a leading global partner in Data & AI consulting, with the critical mass required to support transformation at scale.</p>
-              <div class="metric-grid">
-                <div class="metric"><strong data-count="27">27</strong><span>countries</span></div>
-                <div class="metric"><strong data-count="2500">2,500</strong><span>employees</span></div>
-                <div class="metric"><strong data-count="36">36</strong><span>offices</span></div>
+                <div class="globe-metrics" aria-label="Artefact footprint indicators">
+                  <div class="globe-metric" data-presence-step="1"><strong data-count="27" data-count-start>0</strong><span>Countries</span></div>
+                  <div class="globe-metric" data-presence-step="2"><strong data-count="2500" data-count-start>0</strong><span>Employees</span></div>
+                  <div class="globe-metric" data-presence-step="3"><strong data-count="36" data-count-start>0</strong><span>Offices</span></div>
+                  <div class="globe-latam" data-presence-step="4">
+                    <strong><span data-count="400" data-prefix="+" data-count-start>+0</span> Artefactors in LATAM</strong>
+                    <p>Regional offices in Sao Paulo, Mexico City, Santiago, and Bogota.</p>
+                  </div>
+                </div>
               </div>
-              <p style="margin-top:22px;"><strong>In LATAM, Artefact has more than 400 Artefactors and 4 offices.</strong></p>
-              <div class="latam-list">
-                <div class="office">Sao Paulo<br><small>250 Artefactors</small></div>
-                <div class="office">Mexico City</div>
-                <div class="office">Santiago</div>
-                <div class="office">Bogota</div>
-              </div>
+            </div>
+          </article>
+
+          <div class="presence-after-globe">
+            <div class="presence-after-inner">
+              <div class="eyebrow">Industries and regional partners</div>
+              <h2>Artefact works across sectors where data, AI, and adoption unlock measurable value.</h2>
+              <p>Our 1000+ clients, including 300 international brands, trust us across financial services, retail, B2B and industrial markets, CPG, healthcare and pharma, travel, transport, tourism, and other strategic ecosystems.</p>
+              <div class="industry-grid" data-industry-filters>{industry_buttons}</div>
+              <div class="logo-marquee" aria-label="Selected client logos" data-logo-marquee><div class="logo-track">{logo_track}</div></div>
             </div>
           </div>
 
-          <div style="padding-top:80px;">
-            <div class="eyebrow">Industries and regional partners</div>
-            <h2>Artefact works across sectors where data, AI, and adoption unlock measurable value.</h2>
-            <p>Our 1000+ clients, including 300 international brands, trust us across banking, insurance, travel, hospitality, automotive, media, entertainment, cosmetics, luxury, telecom, high tech, commodities, services, retail, selective distribution, consumer packaged goods, healthcare, and mobility.</p>
-            <div class="industry-grid">{''.join(f'<div class="industry reveal">{item}</div>' for item in industries)}</div>
-            <div class="logo-marquee" aria-label="Selected client logos"><div class="logo-track">{logo_track}</div></div>
-            <button class="heineken-trigger reveal" type="button" data-case-trigger="heineken">
-              <span class="beer-mark" aria-hidden="true"></span>
-              <span><h3>Our History With HEINEKEN</h3><p>A multi-year Advanced Analytics journey that created products throughout the entire value chain and scaled AI as a business unit.</p></span>
-              <span class="arrow-pill" aria-hidden="true">›</span>
-            </button>
-          </div>
+          <article class="heineken-bottle-scrolly reveal" data-heineken-bottle>
+            <div class="heineken-bottle-stage">
+              <div class="heineken-bottle-copy">
+                <h2>A memorable example</h2>
+              </div>
+              <h2 class="heineken-history-title">
+                <span>Our history with</span>
+                <button class="heineken-logo-link" type="button" data-case-trigger="heineken" aria-label="Open HEINEKEN case">
+                  <img src="{heineken_white_logo}" alt="HEINEKEN logo">
+                </button>
+              </h2>
+              <div class="heineken-bottle-video-wrap" aria-hidden="true">
+                <video class="heineken-bottle-video" data-heineken-video muted playsinline loop preload="auto" src="{bottle_video}"></video>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -2927,11 +3975,105 @@ html_doc = f"""<!doctype html>
   </dialog>
 
   <script>
+    document.documentElement.classList.add("js-enabled");
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const sections = [...document.querySelectorAll(".section")];
     const navLinks = [...document.querySelectorAll(".top-menu a")];
     const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
     const smooth = (value) => value * value * (3 - 2 * value);
+    const vennScrolly = document.querySelector("[data-venn-scrolly]");
+    const presenceGlobe = document.querySelector("[data-presence-globe]");
+    const presenceVideo = document.querySelector("[data-presence-video]");
+    const heinekenBottle = document.querySelector("[data-heineken-bottle]");
+    const heinekenVideo = document.querySelector("[data-heineken-video]");
+    let targetPresenceTime = 0;
+    let renderedPresenceTime = 0;
+    let presenceScrubFrame = null;
+
+    function updateVennScrolly() {{
+      if (!vennScrolly) return;
+      vennScrolly.classList.remove("venn-step-0", "venn-step-1", "venn-step-2", "venn-step-3");
+      if (prefersReduced) {{
+        vennScrolly.classList.add("venn-step-3");
+        return;
+      }}
+      const rect = vennScrolly.getBoundingClientRect();
+      const travel = Math.max(1, rect.height - window.innerHeight * .75);
+      const progress = clamp((window.innerHeight * .35 - rect.top) / travel);
+      let step = 0;
+      if (progress > .14) step = 1;
+      if (progress > .40) step = 2;
+      if (progress > .86) step = 3;
+      vennScrolly.classList.add(`venn-step-${{step}}`);
+    }}
+
+    function stepPresenceScrub() {{
+      if (!presenceVideo || !presenceVideo.duration || prefersReduced) {{
+        presenceScrubFrame = null;
+        return;
+      }}
+
+      const difference = targetPresenceTime - renderedPresenceTime;
+      if (Math.abs(difference) < .01) {{
+        renderedPresenceTime = targetPresenceTime;
+        if (!presenceVideo.seeking) presenceVideo.currentTime = renderedPresenceTime;
+        presenceScrubFrame = null;
+        return;
+      }}
+
+      if (!presenceVideo.seeking) {{
+        renderedPresenceTime += difference * .12;
+        presenceVideo.currentTime = renderedPresenceTime;
+      }}
+      presenceScrubFrame = requestAnimationFrame(stepPresenceScrub);
+    }}
+
+    function requestPresenceScrub() {{
+      if (presenceScrubFrame === null) {{
+        presenceScrubFrame = requestAnimationFrame(stepPresenceScrub);
+      }}
+    }}
+
+    function updatePresenceGlobe() {{
+      if (!presenceGlobe) return;
+      const rect = presenceGlobe.getBoundingClientRect();
+      const travel = Math.max(1, presenceGlobe.offsetHeight - window.innerHeight);
+      const progress = prefersReduced ? 1 : clamp(-rect.top / travel);
+      const eased = smooth(progress);
+      presenceGlobe.style.setProperty("--presence-progress", eased.toFixed(3));
+
+      presenceGlobe.querySelectorAll("[data-presence-step]").forEach((item) => {{
+        const step = Number(item.dataset.presenceStep || 1);
+        const threshold = .13 + (step - 1) * .15;
+        item.classList.toggle("is-visible", prefersReduced || progress >= threshold);
+      }});
+
+      if (presenceVideo && presenceVideo.duration && !prefersReduced) {{
+        const usableDuration = Math.min(8, presenceVideo.duration);
+        targetPresenceTime = eased * usableDuration;
+        requestPresenceScrub();
+      }}
+    }}
+
+    function updateHeinekenBottle() {{
+      if (!heinekenBottle) return;
+      const rect = heinekenBottle.getBoundingClientRect();
+      const travel = Math.max(1, heinekenBottle.offsetHeight - window.innerHeight);
+      const progress = prefersReduced ? 1 : clamp(-rect.top / travel);
+      const eased = smooth(progress);
+      const bottleX = -42 + eased * 56;
+      const textProgress = smooth(clamp((progress - .1) / .56));
+
+      heinekenBottle.style.setProperty("--heineken-progress", eased.toFixed(3));
+      heinekenBottle.style.setProperty("--heineken-bottle-x", `${{bottleX.toFixed(2)}}vw`);
+      heinekenBottle.style.setProperty("--heineken-text-opacity", textProgress.toFixed(3));
+      heinekenBottle.style.setProperty("--heineken-text-clip", `${{((1 - textProgress) * 100).toFixed(2)}}%`);
+
+      if (heinekenVideo && heinekenVideo.duration && !prefersReduced && !heinekenVideo.seeking) {{
+        heinekenVideo.pause();
+        heinekenVideo.currentTime = Math.min(heinekenVideo.duration - .05, eased * heinekenVideo.duration);
+      }}
+    }}
 
     const revealObserver = new IntersectionObserver((entries) => {{
       for (const entry of entries) {{
@@ -2954,7 +4096,31 @@ html_doc = f"""<!doctype html>
       navLinks.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === "#" + active));
     }}
     window.addEventListener("scroll", setActiveNav, {{ passive: true }});
+    window.addEventListener("scroll", updateVennScrolly, {{ passive: true }});
+    window.addEventListener("scroll", updatePresenceGlobe, {{ passive: true }});
+    window.addEventListener("scroll", updateHeinekenBottle, {{ passive: true }});
+    window.addEventListener("resize", updateVennScrolly);
+    window.addEventListener("resize", updatePresenceGlobe);
+    window.addEventListener("resize", updateHeinekenBottle);
+    if (presenceVideo) {{
+      presenceVideo.addEventListener("loadedmetadata", () => {{
+        renderedPresenceTime = 0;
+        targetPresenceTime = 0;
+        presenceVideo.currentTime = 0;
+        updatePresenceGlobe();
+      }});
+    }}
+    if (heinekenVideo) {{
+      heinekenVideo.addEventListener("loadedmetadata", () => {{
+        heinekenVideo.pause();
+        heinekenVideo.currentTime = 0;
+        updateHeinekenBottle();
+      }});
+    }}
     setActiveNav();
+    updateVennScrolly();
+    updatePresenceGlobe();
+    updateHeinekenBottle();
 
     const heroMessageEls = [...document.querySelectorAll("[data-hero-message]")];
     if (heroMessageEls.length) {{
@@ -3333,11 +4499,13 @@ html_doc = f"""<!doctype html>
     const counters = [...document.querySelectorAll("[data-count]")];
     const counted = new WeakSet();
     function animateCounter(element, target, duration = 900) {{
+      const prefix = element.dataset.prefix || "";
+      const suffix = element.dataset.suffix || "";
       const start = performance.now();
       function frame(now) {{
         const progress = Math.min((now - start) / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
-        element.textContent = Math.round(target * eased).toLocaleString("en-US");
+        element.textContent = prefix + Math.round(target * eased).toLocaleString("en-US") + suffix;
         if (progress < 1) requestAnimationFrame(frame);
       }}
       requestAnimationFrame(frame);
@@ -3346,11 +4514,22 @@ html_doc = f"""<!doctype html>
       for (const entry of entries) {{
         if (entry.isIntersecting && !counted.has(entry.target)) {{
           counted.add(entry.target);
-          if (!prefersReduced) animateCounter(entry.target, Number(entry.target.dataset.count));
+          const target = Number(entry.target.dataset.count);
+          const prefix = entry.target.dataset.prefix || "";
+          const suffix = entry.target.dataset.suffix || "";
+          if (!prefersReduced) animateCounter(entry.target, target);
+          else entry.target.textContent = prefix + target.toLocaleString("en-US") + suffix;
         }}
       }}
     }}, {{ threshold: .65 }});
-    counters.forEach((counter) => counterObserver.observe(counter));
+    counters.forEach((counter) => {{
+      if (counter.hasAttribute("data-count-start")) {{
+        const prefix = counter.dataset.prefix || "";
+        const suffix = counter.dataset.suffix || "";
+        counter.textContent = prefersReduced ? prefix + Number(counter.dataset.count).toLocaleString("en-US") + suffix : prefix + "0" + suffix;
+      }}
+      counterObserver.observe(counter);
+    }});
 
     const pillarCards = [...document.querySelectorAll("[data-pillar]")];
     function setActivePillar() {{
@@ -3364,6 +4543,38 @@ html_doc = f"""<!doctype html>
     }}
     window.addEventListener("scroll", setActivePillar, {{ passive: true }});
     setActivePillar();
+
+    const industryFilterButtons = [...document.querySelectorAll("[data-industry-filter]")];
+    const logoCells = [...document.querySelectorAll("[data-industries]")];
+    const logoMarquee = document.querySelector("[data-logo-marquee]");
+    const logoTrack = document.querySelector("[data-logo-marquee] .logo-track");
+    let activeIndustryFilter = null;
+
+    function setIndustryFilter(filter) {{
+      activeIndustryFilter = activeIndustryFilter === filter ? null : filter;
+      industryFilterButtons.forEach((button) => {{
+        const active = button.dataset.industryFilter === activeIndustryFilter;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      }});
+      logoCells.forEach((cell) => {{
+        const visible = !activeIndustryFilter || (cell.dataset.industries || "").split(" ").includes(activeIndustryFilter);
+        cell.classList.toggle("is-filtered-out", !visible);
+      }});
+      if (logoMarquee) {{
+        logoMarquee.classList.toggle("is-filtered", Boolean(activeIndustryFilter));
+      }}
+      if (logoTrack) {{
+        logoTrack.style.animation = "none";
+        void logoTrack.offsetHeight;
+        logoTrack.style.animation = "";
+      }}
+    }}
+
+    industryFilterButtons.forEach((button) => {{
+      button.setAttribute("aria-pressed", "false");
+      button.addEventListener("click", () => setIndustryFilter(button.dataset.industryFilter));
+    }});
 
     const modals = [...document.querySelectorAll("[data-case-modal]")];
     let lastFocus = null;
