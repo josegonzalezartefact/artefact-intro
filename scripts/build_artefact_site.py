@@ -89,6 +89,10 @@ def logo_cell(name: str, src: str, categories: list[str] | None = None) -> str:
     return f'<div class="logo-cell"{category_attr}><img src="{src}" alt="{html.escape(name)} logo"></div>'
 
 
+def tech_logo_cell(name: str, src: str) -> str:
+    return f'<div class="logo-cell tech-logo-cell"><img src="{src}" alt="{html.escape(name)} logo"></div>'
+
+
 def industry_button(label: str, slug: str, index: int, total: int) -> str:
     ratio = index / max(total - 1, 1)
     start = (0, 34, 68)
@@ -124,6 +128,16 @@ def card(title: str, body: str) -> str:
 
 def service_card(title: str, body: str) -> str:
     return f'<article class="service-card reveal"><div class="service-icon"></div><h3>{title}</h3><p>{body}</p></article>'
+
+
+def service_carousel_card(index: int, tag: str, title: str, body: str) -> str:
+    return (
+        f'<article class="service-carousel-card" data-service-card data-service-index="{index}" tabindex="0">'
+        f'<span class="service-tag">{tag}</span>'
+        f'<h3>{title}</h3>'
+        f'<p>{body}</p>'
+        f'</article>'
+    )
 
 
 def competitor_logo(name: str, key: str, x: float, y: float, w: float) -> str:
@@ -163,7 +177,7 @@ def section_transition(title: str) -> str:
 
 wordmark = data_uri(ASSET_ROOT / "logos/wordmark.png")
 a_icon = data_uri(ASSET_ROOT / "icons/artefact_A_icon.png")
-person_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/person.mp4"))
+person_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/person_alfa.webm"))
 section_background_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/section_background.mp4"))
 globe_background_video = "assets/videos/globe_background.mp4"
 bottle_video = data_uri(Path("/Users/jose/Documents/videos_website/assets/videos/beer_green.webm"))
@@ -176,6 +190,11 @@ offering_vision_img = data_uri(ASSET_ROOT / "images-examples/12.jpg")
 offering_model_img = data_uri(ASSET_ROOT / "images-examples/6.jpg")
 offering_data_img = data_uri(ASSET_ROOT / "images-examples/15.png")
 offering_change_img = data_uri(ASSET_ROOT / "images-examples/18.png")
+proof_global_img = data_uri(ROOT / "assets/images/global.jpg")
+proof_pure_player_img = data_uri(ROOT / "assets/images/pure-player.jpg")
+proof_end_to_end_img = data_uri(ROOT / "assets/images/end-to-end.jpg")
+grand_palais_front_img = data_uri(ROOT / "assets/images/grand-palais-1.png")
+grand_palais_inside_img = data_uri(ROOT / "assets/images/grand-palais-2.png")
 
 consultancy_logo_files = {
     "accenture": "accenture-logo.webp",
@@ -359,6 +378,24 @@ for _, slug, items in industry_segments:
     for name, stem in items:
         logo_items.append(logo_cell(name, client_logo_src(stem), [slug]))
 logo_track = "\n".join(logo_items + logo_items)
+
+technology_logos = [
+    ("Google Marketing Platform", "gmp-logo.webp"),
+    ("Google Cloud Platform", "gcp-logo.png"),
+    ("AWS", "aws.png"),
+    ("Microsoft Azure", "azure-logo.png"),
+    ("SAP", "sap-logo.webp"),
+    ("Databricks", "databricks.webp"),
+    ("Snowflake", "snowflake-logo.png"),
+    ("IBM", "ibm-logo.webp"),
+    ("Treasure Data", "treasuredata-logo.png"),
+    ("Gemini", "gemini-logo.webp"),
+]
+technology_logo_items = [
+    tech_logo_cell(name, trimmed_png_data_uri(ai_logo_root / filename))
+    for name, filename in technology_logos
+]
+technology_logo_track = "\n".join(technology_logo_items + technology_logo_items)
 chatgpt_icon = data_uri(ai_logo_root / "chatgpt-logo.webp")
 agent_icon = data_uri(ai_logo_root / "agent-logo.png")
 genai_stars_icon = cropped_png_data_uri(ai_logo_root / "genai-logo.webp", (60, 45, 430, 400))
@@ -931,8 +968,8 @@ html_doc = f"""<!doctype html>
       line-height:1.58;
     }}
     .hero {{
-      min-height:205vh;
-      padding:0 0 84px;
+      min-height:200vh;
+      padding:0;
       background:
         radial-gradient(circle at 78% 20%, rgba(255,0,102,.12), transparent 30%),
         radial-gradient(circle at 18% 72%, rgba(39,50,117,.18), transparent 34%),
@@ -948,9 +985,12 @@ html_doc = f"""<!doctype html>
       gap:clamp(30px, 4vw, 58px);
       align-items:center;
       padding-top:74px;
+      isolation:isolate;
     }}
     .hero-copy-stack {{
       position:relative;
+      z-index:3;
+      grid-column:1 / 2;
       min-height:clamp(430px, 66vh, 660px);
     }}
     .mission {{
@@ -1019,36 +1059,40 @@ html_doc = f"""<!doctype html>
       font-weight:700;
     }}
     .hero-visual {{
-      position:relative;
-      min-height:650px;
-      border-radius:10px;
-      overflow:hidden;
+      position:absolute;
+      z-index:1;
+      inset:74px 0 0;
+      min-height:calc(100svh - 74px);
+      border-radius:0;
+      overflow:visible;
       background:transparent;
       box-shadow:none;
       transform-style:preserve-3d;
-      isolation:isolate;
-      -webkit-mask-image:radial-gradient(ellipse 57% 76% at 54% 52%, #000 0 54%, rgba(0,0,0,.82) 66%, transparent 84%);
-      mask-image:radial-gradient(ellipse 57% 76% at 54% 52%, #000 0 54%, rgba(0,0,0,.82) 66%, transparent 84%);
+      pointer-events:none;
     }}
     .hero-visual::before {{
       content:"";
       position:absolute;
       inset:0;
-      background:
-        radial-gradient(circle at 42% 42%, rgba(255,0,102,.10), transparent 28%),
-        linear-gradient(90deg, rgba(1,8,23,.62), transparent 38%, rgba(1,8,23,.38));
+      background:transparent;
       z-index:1;
       mix-blend-mode:normal;
+      pointer-events:none;
     }}
     .person-video {{
-      width:100%;
-      height:100%;
+      position:absolute;
+      right:-8%;
+      bottom:-2px;
+      width:74%;
+      height:118%;
       min-height:650px;
-      object-fit:cover;
+      object-fit:contain;
       object-position:right bottom;
-      filter:grayscale(0.03) saturate(1.08) contrast(1.26) brightness(0.86);
-      opacity:.98;
-      mix-blend-mode:multiply;
+      filter:saturate(1.08) contrast(1.08) brightness(.98);
+      opacity:1;
+      mix-blend-mode:normal;
+      transform:scale(1.25);
+      transform-origin:right bottom;
     }}
     .hero-visual .bridge {{
       position:absolute;
@@ -1247,11 +1291,15 @@ html_doc = f"""<!doctype html>
       transform:translate3d(0, calc((1 - var(--phase-progress, 0)) * 22px), 0);
       transition:opacity .12s linear, transform .12s linear;
     }}
+    .competitor-group:hover,
+    .competitor-group:focus-within {{
+      z-index:40;
+    }}
     .competitor-group h3 {{
       position:absolute;
       left:50%;
       bottom:calc(100% + 10px);
-      z-index:8;
+      z-index:60;
       margin:0;
       max-width:260px;
       min-width:190px;
@@ -2190,7 +2238,7 @@ html_doc = f"""<!doctype html>
       min-height:188vh;
       border-radius:0;
       overflow:clip;
-      background:#00040c;
+      background:#020610;
       color:#fff;
     }}
     .presence-globe-stage {{
@@ -2201,24 +2249,34 @@ html_doc = f"""<!doctype html>
       grid-template-columns:minmax(0, 1fr) minmax(420px, 1fr);
       align-items:stretch;
       isolation:isolate;
-      background:#00040c;
+      background:
+        radial-gradient(circle at 28% 46%, rgba(0,84,142,.14), transparent 43%),
+        radial-gradient(circle at 82% 12%, rgba(255,0,102,.075), transparent 32%),
+        linear-gradient(135deg,#020610 0%, #020610 100%);
     }}
     .presence-globe-visual {{
-      position:relative;
-      min-height:100svh;
+      position:absolute;
+      inset:0;
+      z-index:0;
+      min-height:100%;
       overflow:hidden;
-      background:#00040c;
+      background:transparent;
     }}
     .presence-globe-visual video {{
       position:absolute;
-      inset:-3% -6% -3% -2%;
-      width:108%;
+      left:-2%;
+      top:-3%;
+      bottom:-3%;
+      width:70%;
       height:106%;
       object-fit:cover;
       object-position:center center;
-      opacity:calc(.72 + (var(--presence-progress, 0) * .18));
-      filter:saturate(1.04) contrast(1.1) brightness(calc(.58 + (var(--presence-progress, 0) * .14)));
+      opacity:calc(.86 + (var(--presence-progress, 0) * .08));
+      filter:saturate(1.38) hue-rotate(8deg) contrast(1.18) brightness(calc(.68 + (var(--presence-progress, 0) * .16)));
+      mix-blend-mode:screen;
       transform:scale(calc(1.04 - (var(--presence-progress, 0) * .018))) translate3d(calc(20px - (var(--presence-progress, 0) * 8px)), 0, 0);
+      -webkit-mask-image:linear-gradient(90deg, #000 0%, #000 76%, rgba(0,0,0,.86) 88%, transparent 100%);
+      mask-image:linear-gradient(90deg, #000 0%, #000 76%, rgba(0,0,0,.86) 88%, transparent 100%);
       will-change:transform, filter, opacity;
     }}
     .presence-globe-visual::after {{
@@ -2226,18 +2284,20 @@ html_doc = f"""<!doctype html>
       position:absolute;
       inset:0;
       background:
-        linear-gradient(90deg, rgba(0,4,12,.04) 0%, rgba(0,4,12,.08) 56%, #00040c 100%),
-        radial-gradient(circle at 78% 50%, rgba(0,4,12,.18), rgba(0,4,12,.72) 74%);
+        linear-gradient(90deg, rgba(2,6,16,.015) 0%, rgba(2,6,16,.025) 64%, rgba(2,6,16,.12) 100%),
+        radial-gradient(circle at 32% 46%, rgba(0,84,142,.055), transparent 42%),
+        radial-gradient(circle at 88% 50%, rgba(2,6,16,.02), rgba(2,6,16,.24) 82%);
       pointer-events:none;
     }}
     .presence-globe-copy {{
+      position:relative;
+      z-index:1;
+      grid-column:2;
       min-height:100svh;
       display:grid;
-      align-content:center;
-      padding:clamp(48px, 7vw, 92px) clamp(34px, 7vw, 104px) clamp(42px, 6vw, 76px) clamp(28px, 4.6vw, 76px);
-      background:
-        radial-gradient(circle at 72% 22%, rgba(255,0,102,.14), transparent 30%),
-        linear-gradient(90deg, rgba(0,4,12,.74), #00040c 28%, #00040c 100%);
+      align-content:start;
+      padding:clamp(40px, 5.2vw, 70px) clamp(34px, 7vw, 104px) clamp(34px, 4.8vw, 58px) clamp(28px, 4.6vw, 76px);
+      background:transparent;
     }}
     .presence-globe-copy .eyebrow {{
       color:var(--magenta);
@@ -2245,18 +2305,18 @@ html_doc = f"""<!doctype html>
     }}
     .presence-globe-copy h2 {{
       margin:0;
-      max-width:720px;
+      max-width:660px;
       color:#fff;
-      font-size:clamp(40px, 4.7vw, 72px);
+      font-size:clamp(38px, 4.25vw, 64px);
       line-height:1.04;
       letter-spacing:0;
       font-weight:400;
     }}
     .globe-metrics {{
       display:grid;
-      gap:18px;
-      margin-top:clamp(38px, 8vh, 84px);
-      max-width:560px;
+      gap:12px;
+      margin-top:clamp(28px, 5.4vh, 52px);
+      max-width:520px;
       justify-self:end;
     }}
     .globe-metric {{
@@ -2274,7 +2334,7 @@ html_doc = f"""<!doctype html>
     }}
     .globe-metric strong {{
       color:#fff;
-      font-size:clamp(36px, 4vw, 58px);
+      font-size:clamp(34px, 3.6vw, 52px);
       line-height:.94;
       font-weight:900;
       letter-spacing:0;
@@ -2282,7 +2342,7 @@ html_doc = f"""<!doctype html>
     }}
     .globe-metric span {{
       color:#f8fafc;
-      font-size:clamp(22px, 2.35vw, 38px);
+      font-size:clamp(21px, 2.05vw, 32px);
       line-height:1;
       font-weight:400;
       transition:color .36s ease;
@@ -2292,8 +2352,8 @@ html_doc = f"""<!doctype html>
       color:var(--magenta);
     }}
     .globe-latam {{
-      margin-top:30px;
-      padding-top:26px;
+      margin-top:22px;
+      padding-top:18px;
       border-top:1px solid rgba(255,255,255,0);
       opacity:0;
       transform:translate3d(0, 16px, 0);
@@ -2307,15 +2367,15 @@ html_doc = f"""<!doctype html>
     .globe-latam strong {{
       display:block;
       color:#fff;
-      font-size:clamp(28px, 3vw, 44px);
+      font-size:clamp(27px, 2.7vw, 40px);
       line-height:1.04;
-      margin-bottom:14px;
+      margin-bottom:10px;
     }}
     .globe-latam p {{
       margin:0;
       color:#cbd5e1;
-      font-size:clamp(16px, 1.25vw, 21px);
-      line-height:1.45;
+      font-size:clamp(15px, 1.12vw, 18px);
+      line-height:1.36;
     }}
     .map-panel {{
       min-height:620px;
@@ -2438,10 +2498,10 @@ html_doc = f"""<!doctype html>
     .logo-track {{
       display:flex;
       width:max-content;
-      animation:marquee 96s linear infinite;
+      animation:marquee var(--marquee-duration, 96s) linear infinite;
     }}
     .logo-marquee.is-filtered .logo-track {{
-      animation-duration:24s;
+      animation-duration:var(--marquee-duration, 24s);
     }}
     .logo-marquee:hover .logo-track {{ animation-play-state:paused; }}
     .logo-cell {{
@@ -2658,6 +2718,10 @@ html_doc = f"""<!doctype html>
     }}
     .offering {{
       background:#fff;
+    }}
+    .offering .sticky-chapter {{
+      padding-top:0;
+      padding-bottom:0;
     }}
     .pillar-wrap {{
       display:grid;
@@ -2910,11 +2974,268 @@ html_doc = f"""<!doctype html>
     .proof-card {{
       padding:24px;
     }}
+    .proof-image-card {{
+      position:relative;
+      min-height:390px;
+      overflow:hidden;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.12);
+      background:#071020;
+      box-shadow:0 24px 58px rgba(0,0,0,.22);
+      isolation:isolate;
+    }}
+    .proof-image-card img {{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      transform:scale(1);
+      transition:transform .55s cubic-bezier(.2,.8,.2,1), filter .55s ease;
+      filter:saturate(1.08) contrast(1.04) brightness(.78);
+    }}
+    .proof-image-card::after {{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:1;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.42) 0%, rgba(0,0,0,.08) 38%, rgba(0,0,0,.78) 100%),
+        radial-gradient(circle at 80% 12%, rgba(255,0,102,.2), transparent 34%);
+      transition:background .4s ease;
+    }}
+    .proof-tag {{
+      position:absolute;
+      z-index:3;
+      top:18px;
+      left:18px;
+      display:inline-flex;
+      align-items:center;
+      min-height:34px;
+      padding:0 13px;
+      border-radius:999px;
+      color:#fff;
+      background:rgba(255,0,102,.88);
+      font-size:12px;
+      line-height:1;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      box-shadow:0 12px 24px rgba(0,0,0,.2);
+    }}
+    .proof-overlay {{
+      position:absolute;
+      z-index:2;
+      inset:auto 0 0;
+      padding:66px 22px 22px;
+      color:#fff;
+      transform:translateY(100%);
+      transition:transform .42s cubic-bezier(.2,.8,.2,1);
+    }}
+    .proof-overlay h3 {{
+      margin:0 0 10px;
+      color:#fff;
+      font-size:clamp(24px, 2vw, 34px);
+      line-height:1;
+    }}
+    .proof-overlay p {{
+      margin:0;
+      color:rgba(255,255,255,.82);
+      font-size:14px;
+      line-height:1.32;
+    }}
+    .proof-image-card:hover img,
+    .proof-image-card:focus-within img {{
+      transform:scale(1.065);
+      filter:saturate(1.18) contrast(1.08) brightness(.9);
+    }}
+    .proof-image-card:hover::after,
+    .proof-image-card:focus-within::after {{
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.38) 0%, rgba(0,0,0,.22) 34%, rgba(0,0,0,.9) 100%),
+        radial-gradient(circle at 80% 12%, rgba(255,0,102,.28), transparent 34%);
+    }}
+    .proof-image-card:hover .proof-overlay,
+    .proof-image-card:focus-within .proof-overlay {{
+      transform:translateY(0);
+    }}
     .service-grid {{
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap:18px;
       margin-top:28px;
+    }}
+    .service-showcase {{
+      position:relative;
+      margin-top:36px;
+      min-height:430px;
+      border-radius:10px;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 52% 38%, rgba(255,0,102,.28), transparent 30%),
+        radial-gradient(circle at 44% 48%, rgba(96,72,180,.24), transparent 34%),
+        linear-gradient(135deg,#020610 0%, #06142c 48%, #1e0820 100%);
+      box-shadow:0 30px 90px rgba(2,6,16,.22);
+      perspective:1400px;
+      isolation:isolate;
+    }}
+    .service-showcase::before {{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(90deg, rgba(2,6,16,.88), transparent 18%, transparent 82%, rgba(2,6,16,.88)),
+        radial-gradient(circle at 50% 32%, rgba(255,255,255,.12), transparent 34%);
+      pointer-events:none;
+      z-index:2;
+    }}
+    .service-carousel {{
+      position:relative;
+      height:430px;
+      transform-style:preserve-3d;
+      z-index:1;
+    }}
+    .service-carousel-card {{
+      --offset:0;
+      --abs:0;
+      --opacity:1;
+      --z:10;
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:clamp(280px, 31vw, 420px);
+      min-height:295px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:24px;
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:8px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.025)),
+        linear-gradient(135deg, rgba(0,34,68,.92), rgba(39,50,117,.76) 54%, rgba(255,0,102,.28));
+      box-shadow:
+        0 28px 70px rgba(0,0,0,.36),
+        inset 0 1px 0 rgba(255,255,255,.14);
+      backdrop-filter:blur(14px);
+      color:#fff;
+      opacity:var(--opacity);
+      z-index:var(--z);
+      cursor:pointer;
+      transform:
+        translate(-50%, -50%)
+        translateX(calc(var(--offset) * 260px))
+        translateZ(calc((1 - var(--abs)) * 130px))
+        rotateY(calc(var(--offset) * -13deg))
+        scale(calc(1 - (var(--abs) * .075)));
+      transform-style:preserve-3d;
+      transition:transform .55s cubic-bezier(.2,.8,.2,1), opacity .35s ease, border-color .25s ease, box-shadow .25s ease;
+    }}
+    .service-carousel-card::before {{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,0,102,.24), transparent 36%),
+        linear-gradient(145deg, rgba(255,255,255,.08), transparent 42%);
+      pointer-events:none;
+    }}
+    .service-carousel-card.is-active {{
+      border-color:rgba(255,0,102,.52);
+      box-shadow:
+        0 36px 90px rgba(0,0,0,.42),
+        0 0 42px rgba(255,0,102,.22),
+        inset 0 1px 0 rgba(255,255,255,.2);
+    }}
+    .service-carousel-card.is-active:hover,
+    .service-carousel-card.is-active:focus-visible {{
+      transform:
+        translate(-50%, -50%)
+        translateX(calc(var(--offset) * 260px))
+        translateZ(calc((1 - var(--abs)) * 130px + 34px))
+        rotateY(calc(var(--offset) * -13deg))
+        scale(calc(1.025 - (var(--abs) * .075)));
+      outline:none;
+    }}
+    .service-tag {{
+      position:relative;
+      width:max-content;
+      padding:9px 12px;
+      border-radius:999px;
+      background:var(--magenta);
+      color:#fff;
+      font-size:12px;
+      line-height:1;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }}
+    .service-carousel-card h3 {{
+      position:relative;
+      margin:42px 0 18px;
+      color:#fff;
+      font-size:clamp(25px, 2.4vw, 36px);
+      line-height:.98;
+      letter-spacing:0;
+    }}
+    .service-carousel-card p {{
+      position:relative;
+      margin:0;
+      color:rgba(255,255,255,.76);
+      font-size:14px;
+      line-height:1.42;
+    }}
+    .service-carousel-nav {{
+      position:absolute;
+      left:50%;
+      bottom:24px;
+      z-index:4;
+      display:flex;
+      align-items:center;
+      gap:14px;
+      transform:translateX(-50%);
+    }}
+    .service-carousel-button {{
+      width:42px;
+      height:42px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      font-size:24px;
+      line-height:1;
+      cursor:pointer;
+      backdrop-filter:blur(12px);
+      transition:background .2s ease, transform .2s ease, border-color .2s ease;
+    }}
+    .service-carousel-button:hover,
+    .service-carousel-button:focus-visible {{
+      background:rgba(255,0,102,.78);
+      border-color:rgba(255,255,255,.42);
+      transform:translateY(-1px);
+      outline:none;
+    }}
+    .service-carousel-dots {{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }}
+    .service-carousel-dots button {{
+      width:8px;
+      height:8px;
+      padding:0;
+      border:0;
+      border-radius:999px;
+      background:rgba(255,255,255,.34);
+      cursor:pointer;
+      transition:width .22s ease, background .22s ease;
+    }}
+    .service-carousel-dots button.is-active {{
+      width:24px;
+      background:var(--magenta);
     }}
     .service-icon {{
       width:42px;
@@ -2923,77 +3244,200 @@ html_doc = f"""<!doctype html>
       background:var(--grad);
       margin-bottom:16px;
     }}
-    .ecosystem {{
-      margin-top:36px;
-      display:grid;
-      grid-template-columns:1fr 1.3fr;
-      gap:24px;
-      align-items:stretch;
-    }}
-    .clouds {{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:12px;
-    }}
-    .clouds span {{
-      display:grid;
-      place-items:center;
-      min-height:74px;
+    .platform-ecosystem {{
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      margin-top:38px;
+      padding:34px 0;
       border:1px solid var(--line);
-      border-radius:8px;
+      border-left:0;
+      border-right:0;
+      border-radius:0;
       background:#fff;
-      font-weight:900;
-      color:var(--navy);
+      box-shadow:0 18px 50px rgba(15,23,42,.08);
+    }}
+    .platform-copy {{
+      width:min(1180px, calc(100% - 48px));
+      display:grid;
+      grid-template-columns:minmax(260px, .75fr) minmax(0, 1fr);
+      gap:22px;
+      align-items:end;
+      margin:0 auto 22px;
+    }}
+    .platform-copy h3 {{
+      margin:0;
+      color:var(--ink);
+      font-size:clamp(28px, 2.8vw, 44px);
+      line-height:1;
+      letter-spacing:0;
+    }}
+    .platform-copy p {{
+      margin:0;
+      color:var(--muted);
+      font-size:16px;
+      line-height:1.45;
+    }}
+    .tech-logo-marquee {{
+      border-color:rgba(15,23,42,.10);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+    }}
+    .tech-logo-marquee .logo-track {{
+      --marquee-duration:42s;
+    }}
+    .tech-logo-cell {{
+      width:190px;
+      flex-basis:190px;
+    }}
+    .tech-logo-cell img {{
+      max-width:148px;
+      max-height:48px;
     }}
     .adopt {{
       color:#fff;
+      background:#020610;
+      overflow:hidden;
+    }}
+    .adopt .section-transition {{
+      height:110vh;
+      min-height:680px;
+    }}
+    .adopt-stage {{
+      position:relative;
+      width:100vw;
+      min-height:100svh;
+      margin-left:calc(50% - 50vw);
+      display:grid;
+      align-items:center;
+      overflow:hidden;
+      --lamp-x:50%;
+      --lamp-y:50%;
+      background:#020610;
+      cursor:none;
+      isolation:isolate;
+    }}
+    .adopt-image {{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      object-position:center;
+    }}
+    .adopt-front {{
+      z-index:1;
+      filter:saturate(.9) contrast(1.08) brightness(.62);
+    }}
+    .adopt-inside {{
+      z-index:2;
+      opacity:0;
+      filter:saturate(1.05) contrast(1.08) brightness(.92);
+      -webkit-mask-image:radial-gradient(circle 0 at var(--lamp-x) var(--lamp-y), #000 0%, transparent 100%);
+      mask-image:radial-gradient(circle 0 at var(--lamp-x) var(--lamp-y), #000 0%, transparent 100%);
+      transition:opacity .26s ease, -webkit-mask-image .18s ease, mask-image .18s ease;
+    }}
+    .adopt-stage::before {{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:3;
       background:
-        linear-gradient(90deg, rgba(0,34,68,.95), rgba(39,50,117,.82), rgba(255,0,102,.7)),
-        url("{flow_img}") center/cover;
+        radial-gradient(circle at var(--lamp-x) var(--lamp-y), rgba(255,255,255,.16), transparent 9rem),
+        linear-gradient(90deg, rgba(2,6,16,.76) 0%, rgba(2,6,16,.26) 48%, rgba(2,6,16,.82) 100%),
+        radial-gradient(circle at 82% 18%, rgba(255,0,102,.28), transparent 34%);
+      pointer-events:none;
+      transition:opacity .24s ease;
     }}
-    .adopt p {{ color:rgba(255,255,255,.82); }}
-    .event-grid {{
+    .adopt-stage:hover .adopt-inside,
+    .adopt-stage:focus-within .adopt-inside {{
+      opacity:1;
+      -webkit-mask-image:radial-gradient(circle 230px at var(--lamp-x) var(--lamp-y), #000 0%, #000 55%, rgba(0,0,0,.42) 76%, transparent 100%);
+      mask-image:radial-gradient(circle 230px at var(--lamp-x) var(--lamp-y), #000 0%, #000 55%, rgba(0,0,0,.42) 76%, transparent 100%);
+    }}
+    .adopt-stage:hover::before,
+    .adopt-stage:focus-within::before {{
+      background:
+        radial-gradient(circle at var(--lamp-x) var(--lamp-y), rgba(255,255,255,.18), transparent 10rem),
+        linear-gradient(90deg, rgba(2,6,16,.74) 0%, rgba(2,6,16,.20) 48%, rgba(2,6,16,.78) 100%),
+        radial-gradient(circle at 82% 18%, rgba(255,0,102,.20), transparent 34%);
+    }}
+    .adopt-content {{
+      position:relative;
+      z-index:4;
+      width:min(1180px, calc(100% - 56px));
+      margin:0 auto;
+      min-height:72svh;
       display:grid;
-      grid-template-columns:1.1fr .9fr;
-      gap:30px;
-      align-items:start;
-      padding:100px 0;
+      grid-template-columns:minmax(0, .92fr) minmax(360px, .62fr);
+      gap:clamp(28px, 5vw, 82px);
+      align-items:center;
     }}
-    .event-panel {{
-      padding:28px;
-      border:1px solid rgba(255,255,255,.24);
-      border-radius:8px;
-      background:rgba(13,22,52,.62);
+    .adopt-title h2 {{
+      margin:0;
+      color:#fff;
+      font-size:clamp(62px, 10vw, 150px);
+      line-height:.86;
+      letter-spacing:0;
+      text-shadow:0 22px 70px rgba(0,0,0,.44);
     }}
-    .tbd-grid {{
-      display:grid;
-      grid-template-columns:repeat(2,1fr);
-      gap:10px;
-      margin-top:22px;
-    }}
-    .tbd {{
-      padding:13px;
-      border-radius:8px;
-      background:rgba(255,255,255,.1);
+    .adopt-details {{
+      justify-self:end;
+      max-width:470px;
+      padding:26px;
       border:1px solid rgba(255,255,255,.16);
-      font-weight:800;
-    }}
-    .previous {{
-      display:grid;
-      grid-template-columns:repeat(5,1fr);
-      gap:10px;
-      margin-top:20px;
-    }}
-    .previous div {{
-      padding:16px 10px;
       border-radius:8px;
-      background:rgba(255,255,255,.1);
-      text-align:center;
+      background:rgba(2,6,16,.58);
+      box-shadow:0 24px 70px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter:blur(16px);
+      opacity:0;
+      transform:translateX(18px);
+      transition:opacity .26s ease, transform .26s ease;
     }}
-    .previous strong {{
+    .adopt-stage:hover .adopt-details,
+    .adopt-stage:focus-within .adopt-details {{
+      opacity:1;
+      transform:translateX(0);
+    }}
+    .adopt-details .eyebrow {{
+      color:var(--magenta);
+      margin-bottom:12px;
+    }}
+    .adopt-details h3 {{
+      color:#fff;
+      margin:0 0 12px;
+      font-size:clamp(24px, 2.3vw, 34px);
+    }}
+    .adopt-details p {{
+      margin:0;
+      color:rgba(255,255,255,.82);
+      font-size:16px;
+      line-height:1.44;
+    }}
+    .adopt-stats {{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+      margin-top:18px;
+    }}
+    .adopt-stat {{
+      padding:13px 14px;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:8px;
+      background:rgba(255,255,255,.08);
+    }}
+    .adopt-stat strong {{
       display:block;
-      font-size:28px;
+      color:#fff;
+      font-size:26px;
       line-height:1;
+    }}
+    .adopt-stat span {{
+      display:block;
+      margin-top:4px;
+      color:rgba(255,255,255,.72);
+      font-size:12px;
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.06em;
     }}
     .contact {{
       padding:72px 0 58px;
@@ -3663,7 +4107,7 @@ html_doc = f"""<!doctype html>
         top:-.08em;
         font-size:1.72em;
       }}
-      .hero-grid, .chapter-grid, .positioning, .map-panel, .pillar-wrap, .ecosystem, .event-grid {{
+      .hero-grid, .chapter-grid, .positioning, .map-panel, .pillar-wrap, .event-grid {{
         grid-template-columns:1fr;
       }}
       .offering-pyramid-scrolly {{
@@ -3712,6 +4156,74 @@ html_doc = f"""<!doctype html>
         font-size:13px;
         line-height:1.24;
       }}
+      .service-showcase {{
+        min-height:620px;
+      }}
+      .service-carousel {{
+        height:560px;
+      }}
+      .service-carousel-card {{
+        width:min(82vw, 340px);
+        min-height:300px;
+        transform:
+          translate(-50%, -50%)
+          translateY(calc(var(--offset) * 34px))
+          translateX(calc(var(--offset) * 42px))
+          translateZ(calc((1 - var(--abs)) * 80px))
+          rotateY(calc(var(--offset) * -8deg))
+          scale(calc(1 - (var(--abs) * .07)));
+      }}
+      .service-carousel-card.is-active:hover,
+      .service-carousel-card.is-active:focus-visible {{
+        transform:
+          translate(-50%, -50%)
+          translateY(calc(var(--offset) * 34px))
+          translateX(calc(var(--offset) * 42px))
+          translateZ(calc((1 - var(--abs)) * 80px + 24px))
+          rotateY(calc(var(--offset) * -8deg))
+          scale(calc(1.02 - (var(--abs) * .07)));
+      }}
+      .service-carousel-card p {{
+        font-size:13px;
+      }}
+      .platform-ecosystem {{
+        padding:24px 0;
+      }}
+      .platform-copy {{
+        width:min(100% - 32px, 720px);
+        grid-template-columns:1fr;
+        gap:12px;
+      }}
+      .tech-logo-cell {{
+        width:162px;
+        flex-basis:162px;
+      }}
+      .adopt-stage {{
+        cursor:auto;
+        min-height:100svh;
+      }}
+      .adopt-stage .adopt-inside {{
+        opacity:.7;
+        -webkit-mask-image:linear-gradient(180deg, transparent 0%, #000 42%, #000 100%);
+        mask-image:linear-gradient(180deg, transparent 0%, #000 42%, #000 100%);
+      }}
+      .adopt-content {{
+        width:min(100% - 32px, 720px);
+        min-height:82svh;
+        grid-template-columns:1fr;
+        align-content:center;
+      }}
+      .adopt-title h2 {{
+        font-size:clamp(58px, 18vw, 96px);
+      }}
+      .adopt-details {{
+        justify-self:stretch;
+        opacity:1;
+        transform:none;
+      }}
+      .adopt-stats {{
+        grid-template-columns:1fr 1fr;
+      }}
       .presence-globe-scrolly {{
         min-height:168vh;
       }}
@@ -3731,14 +4243,15 @@ html_doc = f"""<!doctype html>
       }}
       .presence-globe-visual::after {{
         background:
-          linear-gradient(180deg, rgba(0,4,12,.08) 0%, #00040c 58%, #00040c 100%),
-          radial-gradient(circle at 50% 24%, transparent 0 22%, rgba(0,4,12,.72) 76%);
+          linear-gradient(180deg, rgba(2,6,16,.08) 0%, #020610 58%, #020610 100%),
+          radial-gradient(circle at 50% 24%, transparent 0 22%, rgba(2,6,16,.7) 76%);
       }}
       .presence-globe-copy {{
         position:relative;
         z-index:1;
-        padding:112px 24px 56px;
-        background:linear-gradient(180deg, rgba(0,4,12,.38), #00040c 62%);
+        grid-column:auto;
+        padding:82px 24px 52px;
+        background:transparent;
       }}
       .globe-metrics {{
         justify-self:stretch;
@@ -3851,10 +4364,25 @@ html_doc = f"""<!doctype html>
         width:min(280px, 70vw);
       }}
       .hero-visual, .person-video {{ min-height:460px; }}
+      .hero-visual {{
+        inset:74px 0 0;
+      }}
+      .person-video {{
+        right:-22%;
+        width:98%;
+        height:104%;
+        transform:scale(1.02);
+      }}
       .chapter-aside, .pyramid {{ position:relative; top:auto; }}
       .scene {{ min-height:auto; }}
       .stat-strip, .diff-grid, .metric-grid, .proof-grid, .service-grid, .contact-wrap, .modal-metrics {{
         grid-template-columns:1fr;
+      }}
+      .proof-image-card {{
+        min-height:320px;
+      }}
+      .proof-overlay {{
+        transform:translateY(0);
       }}
       .heineken-modal .modal-body {{
         height:min(94vh, 720px);
@@ -4025,6 +4553,16 @@ html_doc = f"""<!doctype html>
         font-size:11px;
       }}
       .hero-visual, .person-video {{ min-height:390px; }}
+      .hero-visual {{
+        inset:66px 0 0;
+      }}
+      .person-video {{
+        right:-34%;
+        width:118%;
+        height:92%;
+        opacity:.72;
+        transform:scale(.96);
+      }}
       .bridge {{ grid-template-columns:1fr !important; }}
       .bridge-mark {{ display:none; }}
       .divider {{ min-height:30vh; }}
@@ -4252,27 +4790,51 @@ html_doc = f"""<!doctype html>
           <div style="padding-top:80px;">
             <h2>Artefact gives you what it takes to succeed in Data & AI-driven transformation at scale.</h2>
             <div class="proof-grid">
-              <div class="proof-card reveal"><h3>Global</h3><p>We have the critical mass required to enable full transformation at scale. Artefact's footprint covers 5 continents and 27 countries, and 50% of our projects involve more than 2 offices.</p></div>
-              <div class="proof-card reveal"><h3>Pure Player</h3><p>Being a pure player in Data & AI and GenAI helps us focus on the details that make the difference between an industrialized deployment and a POC, supported by our AI R&D Center and internal toolbox, Skaff.</p></div>
-              <div class="proof-card reveal"><h3>End-To-End</h3><p>We frame, build, and run, from idea creation to project management and operation, with AI experts, Data Scientists, Data Engineers, Digital Experts, and specific adoption programs.</p></div>
+              <article class="proof-image-card reveal" tabindex="0">
+                <img src="{proof_global_img}" alt="">
+                <span class="proof-tag">Global</span>
+                <div class="proof-overlay"><p>We have the critical mass required to enable full transformation at scale. Artefact's footprint covers 5 continents and 27 countries, and 50% of our projects involve more than 2 offices.</p></div>
+              </article>
+              <article class="proof-image-card reveal" tabindex="0">
+                <img src="{proof_pure_player_img}" alt="">
+                <span class="proof-tag">Pure Player</span>
+                <div class="proof-overlay"><p>Being a pure player in Data & AI and GenAI helps us focus on the details that make the difference between an industrialized deployment and a POC, supported by our AI R&D Center and internal toolbox, Skaff.</p></div>
+              </article>
+              <article class="proof-image-card reveal" tabindex="0">
+                <img src="{proof_end_to_end_img}" alt="">
+                <span class="proof-tag">End-to-end</span>
+                <div class="proof-overlay"><p>We frame, build, and run, from idea creation to project management and operation, with AI experts, Data Scientists, Data Engineers, Digital Experts, and specific adoption programs.</p></div>
+              </article>
             </div>
           </div>
 
           <div style="padding-top:80px;">
             <h2>Our end-to-end Data, AI, AI agents, and digital solutions cover the full transformation agenda.</h2>
             <p>Generative AI and AI agent offerings accounted for 50% of our revenue in 2024, and we expect them to reach approximately 65% in 2026.</p>
-            <div class="service-grid">
-              {service_card("Strategy & Transformation", "We guide companies from strategy to operations and adoption, using data to accelerate transformation and create value. Our hackathons, GenAI Academy, and School of Data help companies train and upskill their teams.")}
-              {service_card("Data Foundations & BI", "We build solid data foundations and develop AI solutions tailored to each sector and department, with effective governance and data management frameworks for value creation and regulatory compliance.")}
-              {service_card("AI Acceleration", "We help companies accelerate AI and Agentic AI initiatives, from opportunity identification and business framing to solution design, deployment, adoption, and scaling.")}
-              {service_card("IT & Data Platforms", "We treat data as a strategic asset and offer scalable, secure cloud services, enabling smarter decision-making and IT optimization across leading cloud service providers.")}
-              {service_card("Marketing Data-Driven", "Our marketing specialists, data scientists, and analysts manage campaigns using advanced multichannel strategies and customer data platforms to increase marketing return on investment.")}
-              {service_card("CX & Digital Marketing", "We use advanced digital strategies and media management, combining artificial intelligence and creativity to deliver personalized and engaging consumer experiences.")}
+            <div class="service-showcase reveal" data-service-carousel>
+              <div class="service-carousel" aria-label="Offering families">
+                {service_carousel_card(0, "Strategy", "Strategy & Transformation", "We guide companies from strategy to operations and adoption, using data to accelerate transformation and create value. Our hackathons, GenAI Academy, and School of Data help companies train and upskill their teams.")}
+                {service_carousel_card(1, "Foundations", "Data Foundations & BI", "We build solid data foundations and develop AI solutions tailored to each sector and department, with effective governance and data management frameworks for value creation and regulatory compliance.")}
+                {service_carousel_card(2, "AI", "AI Acceleration", "We help companies accelerate AI and Agentic AI initiatives, from opportunity identification and business framing to solution design, deployment, adoption, and scaling.")}
+                {service_carousel_card(3, "Platforms", "IT & Data Platforms", "We treat data as a strategic asset and offer scalable, secure cloud services, enabling smarter decision-making and IT optimization across leading cloud service providers.")}
+                {service_carousel_card(4, "Marketing", "Marketing Data-Driven", "Our marketing specialists, data scientists, and analysts manage campaigns using advanced multichannel strategies and customer data platforms to increase marketing return on investment.")}
+                {service_carousel_card(5, "CX", "CX & Digital Marketing", "We use advanced digital strategies and media management, combining artificial intelligence and creativity to deliver personalized and engaging consumer experiences.")}
+              </div>
+              <div class="service-carousel-nav" aria-label="Offering carousel controls">
+                <button class="service-carousel-button" type="button" data-service-prev aria-label="Previous offering">‹</button>
+                <div class="service-carousel-dots" data-service-dots aria-label="Offering slides"></div>
+                <button class="service-carousel-button" type="button" data-service-next aria-label="Next offering">›</button>
+              </div>
             </div>
-            <div class="ecosystem">
-              <div class="card reveal"><h3>Tech agnostic and certified across all clouds.</h3><p>AI is the new source of business innovation. Our engineers build tech-agnostic solutions, combining custom code, open-source code, and software, backed by alliances with leading cloud providers.</p></div>
-              <div class="clouds reveal">
-                <span>Google Cloud</span><span>AWS</span><span>Microsoft</span><span>SAP</span><span>Databricks</span><span>Snowflake</span>
+            <div class="platform-ecosystem reveal">
+              <div class="platform-copy">
+                <h3>Tech agnostic and certified across clouds and platforms.</h3>
+                <p>AI is the new source of business innovation. Our engineers build tech-agnostic solutions, combining custom code, open-source code, and software, backed by alliances with leading cloud and data providers.</p>
+              </div>
+              <div class="logo-marquee tech-logo-marquee" aria-label="Cloud, data, and AI platform partners">
+                <div class="logo-track">
+                  {technology_logo_track}
+                </div>
               </div>
             </div>
           </div>
@@ -4282,27 +4844,24 @@ html_doc = f"""<!doctype html>
 
     <section id="adopt-ai" class="adopt section">
       {section_transition("Adopt AI")}
-      <div class="container event-grid">
-        <div>
-          <div class="eyebrow" style="color:#fff;">International summit by Artefact</div>
-          <h2>Adopt AI</h2>
-          <p>Adopt AI is Artefact's international summit dedicated to accelerating AI adoption across companies, industries, and ecosystems.</p>
-          <p>The next edition is being organized for this year. Adopt AI brings together business leaders, technology partners, AI experts, and ecosystem builders to move from AI ambition to adoption at scale.</p>
-          <p>The summit is designed to connect the people and organizations shaping the future of AI, with practical conversations, real-world use cases, and concrete pathways for enterprise adoption.</p>
-        </div>
-        <div class="event-panel reveal">
-          <h3>Details to be confirmed</h3>
-          <div class="tbd-grid">
-            <div class="tbd">Venue</div><div class="tbd">Dates</div><div class="tbd">Speakers</div><div class="tbd">Stages</div><div class="tbd">Exhibitors</div><div class="tbd">Ecosystems</div><div class="tbd">Participants</div>
+      <div class="adopt-stage" data-adopt-stage tabindex="0">
+        <img class="adopt-image adopt-front" src="{grand_palais_front_img}" alt="Grand Palais exterior">
+        <img class="adopt-image adopt-inside" src="{grand_palais_inside_img}" alt="Grand Palais interior">
+        <div class="adopt-content">
+          <div class="adopt-title">
+            <h2>Adopt AI</h2>
           </div>
-          <h3 style="margin-top:28px;">Previous edition reference</h3>
-          <div class="previous">
-            <div><strong>600+</strong><small>speakers</small></div>
-            <div><strong>8</strong><small>stages</small></div>
-            <div><strong>250+</strong><small>exhibitors</small></div>
-            <div><strong>7</strong><small>ecosystems</small></div>
-            <div><strong>20,000+</strong><small>participants</small></div>
-          </div>
+          <aside class="adopt-details" aria-label="Adopt AI Summit 2026 details">
+            <div class="eyebrow">Grand Palais, Paris · December 3 & 4, 2026</div>
+            <h3>The global AI ecosystem comes together in Paris.</h3>
+            <p>Adopt AI Summit 2026 will bring together leaders, innovators, and decision-makers shaping the future of artificial intelligence, with two days of keynotes, practical insights, breakthrough innovations, and networking opportunities.</p>
+            <div class="adopt-stats">
+              <div class="adopt-stat"><strong>20,000+</strong><span>attendees</span></div>
+              <div class="adopt-stat"><strong>2,000+</strong><span>CEOs</span></div>
+              <div class="adopt-stat"><strong>800+</strong><span>speakers</span></div>
+              <div class="adopt-stat"><strong>250+</strong><span>exhibitors</span></div>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
@@ -4447,12 +5006,83 @@ html_doc = f"""<!doctype html>
     const presenceVideo = document.querySelector("[data-presence-video]");
     const heinekenBottle = document.querySelector("[data-heineken-bottle]");
     const offeringPyramid = document.querySelector("[data-offering-pyramid]");
+    const serviceCarousel = document.querySelector("[data-service-carousel]");
+    const adoptStage = document.querySelector("[data-adopt-stage]");
     const heinekenVideo = document.querySelector("[data-heineken-video]");
     const heinekenTitle = document.querySelector(".heineken-history-title");
     const heinekenBottleWrap = document.querySelector(".heineken-bottle-video-wrap");
     let targetPresenceTime = 0;
     let renderedPresenceTime = 0;
     let presenceScrubFrame = null;
+
+    if (serviceCarousel) {{
+      const cards = [...serviceCarousel.querySelectorAll("[data-service-card]")];
+      const prev = serviceCarousel.querySelector("[data-service-prev]");
+      const next = serviceCarousel.querySelector("[data-service-next]");
+      const dotsWrap = serviceCarousel.querySelector("[data-service-dots]");
+      let activeService = 0;
+
+      cards.forEach((card, index) => {{
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.setAttribute("aria-label", `Show offering ${{index + 1}}`);
+        dot.addEventListener("click", () => renderServiceCarousel(index));
+        dotsWrap?.appendChild(dot);
+        card.addEventListener("click", () => renderServiceCarousel(index));
+        card.addEventListener("keydown", (event) => {{
+          if (event.key === "Enter" || event.key === " ") {{
+            event.preventDefault();
+            renderServiceCarousel(index);
+          }}
+        }});
+      }});
+
+      const dots = dotsWrap ? [...dotsWrap.querySelectorAll("button")] : [];
+
+      function renderServiceCarousel(index) {{
+        activeService = (index + cards.length) % cards.length;
+        cards.forEach((card, cardIndex) => {{
+          let offset = cardIndex - activeService;
+          if (offset > cards.length / 2) offset -= cards.length;
+          if (offset < -cards.length / 2) offset += cards.length;
+          const abs = Math.min(Math.abs(offset), 3);
+          card.style.setProperty("--offset", offset.toString());
+          card.style.setProperty("--abs", abs.toString());
+          card.style.setProperty("--opacity", abs > 2 ? ".12" : (1 - abs * .22).toFixed(2));
+          card.style.setProperty("--z", String(30 - abs));
+          card.classList.toggle("is-active", cardIndex === activeService);
+          card.setAttribute("aria-hidden", abs > 2 ? "true" : "false");
+        }});
+        dots.forEach((dot, dotIndex) => {{
+          dot.classList.toggle("is-active", dotIndex === activeService);
+          dot.setAttribute("aria-current", dotIndex === activeService ? "true" : "false");
+        }});
+      }}
+
+      prev?.addEventListener("click", () => renderServiceCarousel(activeService - 1));
+      next?.addEventListener("click", () => renderServiceCarousel(activeService + 1));
+      serviceCarousel.addEventListener("keydown", (event) => {{
+        if (event.key === "ArrowLeft") renderServiceCarousel(activeService - 1);
+        if (event.key === "ArrowRight") renderServiceCarousel(activeService + 1);
+      }});
+      renderServiceCarousel(0);
+    }}
+
+    if (adoptStage) {{
+      function setAdoptLamp(event) {{
+        const rect = adoptStage.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+        adoptStage.style.setProperty("--lamp-x", `${{clamp(x, 0, 100).toFixed(2)}}%`);
+        adoptStage.style.setProperty("--lamp-y", `${{clamp(y, 0, 100).toFixed(2)}}%`);
+      }}
+      adoptStage.addEventListener("pointermove", setAdoptLamp);
+      adoptStage.addEventListener("pointerenter", setAdoptLamp);
+      adoptStage.addEventListener("focus", () => {{
+        adoptStage.style.setProperty("--lamp-x", "62%");
+        adoptStage.style.setProperty("--lamp-y", "48%");
+      }});
+    }}
 
     function updateVennScrolly() {{
       if (!vennScrolly) return;
@@ -5053,6 +5683,23 @@ html_doc = f"""<!doctype html>
     const logoMarquee = document.querySelector("[data-logo-marquee]");
     const logoTrack = document.querySelector("[data-logo-marquee] .logo-track");
     let activeIndustryFilter = null;
+    const cpgLogoCount = logoCells.filter((cell) =>
+      (cell.dataset.industries || "").split(" ").includes("cpg")
+    ).length || 1;
+    const cpgMarqueeDuration = 24;
+
+    function syncLogoMarqueeSpeed() {{
+      if (!logoTrack) return;
+      if (!activeIndustryFilter) {{
+        logoTrack.style.removeProperty("--marquee-duration");
+        return;
+      }}
+      const visibleCount = logoCells.filter((cell) =>
+        (cell.dataset.industries || "").split(" ").includes(activeIndustryFilter)
+      ).length || cpgLogoCount;
+      const duration = cpgMarqueeDuration * (visibleCount / cpgLogoCount);
+      logoTrack.style.setProperty("--marquee-duration", `${{duration.toFixed(2)}}s`);
+    }}
 
     function setIndustryFilter(filter) {{
       activeIndustryFilter = activeIndustryFilter === filter ? null : filter;
@@ -5069,6 +5716,7 @@ html_doc = f"""<!doctype html>
         logoMarquee.classList.toggle("is-filtered", Boolean(activeIndustryFilter));
       }}
       if (logoTrack) {{
+        syncLogoMarqueeSpeed();
         logoTrack.style.animation = "none";
         void logoTrack.offsetHeight;
         logoTrack.style.animation = "";
