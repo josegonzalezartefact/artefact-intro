@@ -172,6 +172,10 @@ flow_img = data_uri(ASSET_ROOT / "images-examples/9.png")
 stairs_img = data_uri(ASSET_ROOT / "images-examples/16.jpg")
 business_depth_img = data_uri(ASSET_ROOT / "images-examples/12.jpg")
 technical_depth_img = data_uri(ASSET_ROOT / "images-examples/15.png")
+offering_vision_img = data_uri(ASSET_ROOT / "images-examples/12.jpg")
+offering_model_img = data_uri(ASSET_ROOT / "images-examples/6.jpg")
+offering_data_img = data_uri(ASSET_ROOT / "images-examples/15.png")
+offering_change_img = data_uri(ASSET_ROOT / "images-examples/18.png")
 
 consultancy_logo_files = {
     "accenture": "accenture-logo.webp",
@@ -591,7 +595,7 @@ ai_shift_section = f"""
               <div class="ai-shift-modules">
                 <article>
                   <h3>End-to-end transformation programmes</h3>
-                  <p>Proven results of AI programmes with leading companies such as HEINEKEN, Carrefour, BNP Paribas, and Orange.</p>
+                  <p>Proven results of AI programmes with leading companies such as Heineken, Carrefour, BNP Paribas, and Orange.</p>
                 </article>
                 <article>
                   <h3>Processes redesign & use cases</h3>
@@ -2717,6 +2721,186 @@ html_doc = f"""<!doctype html>
       padding:28px;
       border-top:1px solid var(--line);
     }}
+    .offering-pyramid-scrolly {{
+      width:100vw;
+      margin-left:calc(50% - 50vw);
+      min-height:230vh;
+      background:#fff;
+      color:var(--ink);
+      overflow:clip;
+    }}
+    .offering-pyramid-stage {{
+      position:sticky;
+      top:0;
+      min-height:100svh;
+      display:grid;
+      align-items:center;
+      padding:clamp(44px, 6vh, 72px) 0 clamp(86px, 12vh, 132px);
+      background:
+        radial-gradient(circle at 14% 6%, rgba(255,0,102,.08), transparent 28%),
+        linear-gradient(180deg,#fff 0%,#f8fafc 100%);
+    }}
+    .offering-pyramid-inner {{
+      width:min(1240px, calc(100% - 56px));
+      margin:0 auto;
+      display:grid;
+      gap:34px;
+      align-items:start;
+    }}
+    .offering-pyramid-heading {{
+      max-width:880px;
+      margin-bottom:10px;
+    }}
+    .offering-pyramid-heading h2 {{
+      margin:0;
+      color:var(--ink);
+      font-size:clamp(40px, 4.9vw, 76px);
+      line-height:.98;
+      letter-spacing:0;
+    }}
+    .offering-pyramid-heading p {{
+      margin:14px 0 0;
+      max-width:720px;
+      color:#64748b;
+      font-size:clamp(18px, 1.45vw, 24px);
+      line-height:1.28;
+    }}
+    .offering-flow {{
+      display:grid;
+      gap:8px;
+      padding-top:8px;
+    }}
+    .offering-flow-row {{
+      position:relative;
+      min-height:94px;
+      display:grid;
+      grid-template-columns:minmax(260px, var(--bar-track, 36%)) minmax(0,1fr);
+      align-items:stretch;
+      opacity:0;
+      transform:translate3d(0,-46px,0);
+      transition:opacity .52s ease, transform .72s cubic-bezier(.18,.82,.22,1);
+    }}
+    .offering-flow-row::before {{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:0;
+      bottom:0;
+      z-index:0;
+      border-radius:18px;
+      background:#eef0f3;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.78);
+    }}
+    .offering-flow-bar {{
+      position:relative;
+      z-index:2;
+      width:var(--bar-width, 100%);
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      padding:18px 22px;
+      border-radius:16px;
+      overflow:hidden;
+      isolation:isolate;
+      color:#fff;
+      background:var(--tier-color);
+      box-shadow:0 22px 44px rgba(15,23,42,.26), 0 6px 14px rgba(15,23,42,.12);
+      transform-origin:left center;
+      transition:transform .24s ease, box-shadow .24s ease;
+    }}
+    .offering-flow-bar::before {{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:-2;
+      background-image:var(--tier-img);
+      background-size:cover;
+      background-position:center;
+      opacity:.5;
+      filter:saturate(.88) contrast(1.08) brightness(1.08);
+      mix-blend-mode:soft-light;
+    }}
+    .offering-flow-bar::after {{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:-1;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--tier-color) 92%, #000 8%), color-mix(in srgb, var(--tier-color) 82%, #fff 18%));
+      opacity:.68;
+      mix-blend-mode:multiply;
+    }}
+    .offering-flow-bar h3 {{
+      margin:0;
+      color:#fff;
+      max-width:13ch;
+      font-size:clamp(16px, 1.38vw, 22px);
+      line-height:1.08;
+      font-weight:850;
+      text-shadow:0 8px 22px rgba(0,0,0,.28);
+    }}
+    .offering-flow-copy {{
+      position:relative;
+      z-index:1;
+      display:grid;
+      align-content:center;
+      padding:16px 30px 16px 22px;
+      transform-origin:left center;
+      transition:transform .24s ease;
+    }}
+    .offering-flow-copy p {{
+      margin:0;
+      color:var(--ink);
+      max-width:720px;
+      font-size:clamp(15px, 1.08vw, 18px);
+      line-height:1.28;
+      font-weight:300;
+    }}
+    .offering-flow-row:hover .offering-flow-bar {{
+      transform:scale(1.026);
+      box-shadow:0 28px 54px rgba(15,23,42,.3), 0 8px 18px rgba(15,23,42,.16);
+    }}
+    .offering-flow-row:hover .offering-flow-copy {{
+      transform:scale(1.012) translateX(4px);
+    }}
+    .flow-vision {{
+      --bar-track:29%;
+      --bar-width:82%;
+      --tier-color:#002244;
+      --tier-img:url("{offering_vision_img}");
+    }}
+    .flow-model {{
+      --bar-track:34%;
+      --bar-width:88%;
+      --tier-color:#553982;
+      --tier-img:url("{offering_model_img}");
+    }}
+    .flow-data {{
+      --bar-track:39%;
+      --bar-width:93%;
+      --tier-color:#a51e77;
+      --tier-img:url("{offering_data_img}");
+    }}
+    .flow-change {{
+      --bar-track:45%;
+      --bar-width:100%;
+      --tier-color:#ff0066;
+      --tier-img:url("{offering_change_img}");
+    }}
+    .offering-pyramid-scrolly.pyramid-step-1 .flow-change,
+    .offering-pyramid-scrolly.pyramid-step-2 .flow-change,
+    .offering-pyramid-scrolly.pyramid-step-3 .flow-change,
+    .offering-pyramid-scrolly.pyramid-step-4 .flow-change,
+    .offering-pyramid-scrolly.pyramid-step-2 .flow-data,
+    .offering-pyramid-scrolly.pyramid-step-3 .flow-data,
+    .offering-pyramid-scrolly.pyramid-step-4 .flow-data,
+    .offering-pyramid-scrolly.pyramid-step-3 .flow-model,
+    .offering-pyramid-scrolly.pyramid-step-4 .flow-model,
+    .offering-pyramid-scrolly.pyramid-step-4 .flow-vision {{
+      opacity:1;
+      transform:translate3d(0,0,0);
+    }}
     .proof-grid {{
       display:grid;
       grid-template-columns:repeat(3,1fr);
@@ -2812,9 +2996,14 @@ html_doc = f"""<!doctype html>
       line-height:1;
     }}
     .contact {{
-      padding:100px 0;
-      background:#fff;
+      padding:72px 0 58px;
+      color:#fff;
+      background:
+        radial-gradient(circle at 82% 18%, rgba(255,0,102,.16), transparent 32%),
+        linear-gradient(135deg,#00040c 0%, #07142e 62%, #110016 100%);
     }}
+    .contact h2 {{ color:#fff; max-width:940px; }}
+    .contact p {{ color:rgba(255,255,255,.78); }}
     .contact-wrap {{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -2824,11 +3013,12 @@ html_doc = f"""<!doctype html>
     }}
     .contact-card {{
       padding:28px;
-      border:1px solid var(--line);
+      border:1px solid rgba(255,255,255,.14);
       border-radius:8px;
-      background:#fff;
-      box-shadow:0 14px 40px rgba(15,23,42,.07);
+      background:rgba(255,255,255,.07);
+      box-shadow:0 18px 54px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.08);
     }}
+    .contact-card h3 {{ color:#fff; }}
     .contact-card a {{
       color:var(--magenta);
       font-weight:900;
@@ -3018,6 +3208,103 @@ html_doc = f"""<!doctype html>
       gap:14px;
       margin:24px 0;
     }}
+    .heineken-modal {{
+      width:min(1180px, calc(100% - 24px));
+    }}
+    .heineken-modal .modal-body {{
+      height:min(94vh, 760px);
+      max-height:94vh;
+      overflow:hidden;
+      padding:18px 22px 20px;
+      display:grid;
+      grid-template-rows:auto auto auto auto auto;
+      color:#fff;
+      background:
+        radial-gradient(circle at 84% 10%, rgba(255,0,102,.22), transparent 32%),
+        linear-gradient(135deg,#00040c 0%, #07142e 58%, #120018 100%);
+    }}
+    .heineken-modal .modal-head {{
+      padding-bottom:10px;
+      margin-bottom:10px;
+      border-bottom-color:rgba(255,255,255,.16);
+    }}
+    .heineken-modal-title {{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      min-width:0;
+    }}
+    .heineken-modal-logo {{
+      display:grid;
+      place-items:center;
+      width:184px;
+      min-width:184px;
+      padding:10px 14px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:8px;
+      background:rgba(255,255,255,.07);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
+    }}
+    .heineken-modal-logo img {{
+      width:100%;
+      max-height:44px;
+      object-fit:contain;
+      filter:drop-shadow(0 12px 30px rgba(0,0,0,.2));
+    }}
+    .heineken-modal .modal-head h2 {{
+      margin:0;
+      color:#fff;
+      font-size:clamp(28px, 3vw, 40px);
+      line-height:1;
+      letter-spacing:0;
+    }}
+    .heineken-modal .eyebrow {{
+      color:var(--magenta);
+      margin-bottom:6px;
+    }}
+    .heineken-modal .close {{
+      color:#fff;
+      border-color:rgba(255,255,255,.22);
+      background:rgba(255,255,255,.06);
+      min-width:38px;
+      height:38px;
+      font-size:21px;
+    }}
+    .heineken-modal .modal-metrics {{
+      margin:0 0 10px;
+      gap:10px;
+    }}
+    .heineken-modal-lead {{
+      margin:0 0 10px;
+      max-width:1040px;
+      color:rgba(255,255,255,.78);
+      font-size:13px;
+      line-height:1.3;
+    }}
+    .heineken-modal .metric {{
+      padding:10px 12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      box-shadow:none;
+    }}
+    .heineken-modal .metric strong {{
+      color:#fff;
+      font-size:clamp(24px, 2.5vw, 34px);
+      margin-bottom:3px;
+    }}
+    .heineken-modal .metric span {{
+      color:rgba(255,255,255,.78);
+      font-size:12px;
+      line-height:1.18;
+    }}
+    .heineken-modal h3 {{
+      margin:8px 0 7px;
+      color:#fff;
+      font-size:13px;
+      line-height:1;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }}
     .archetype-grid {{
       display:grid;
       grid-template-columns:repeat(2, minmax(0,1fr));
@@ -3049,17 +3336,63 @@ html_doc = f"""<!doctype html>
     .journey {{
       display:grid;
       grid-template-columns:repeat(5,1fr);
-      gap:12px;
-      margin:18px 0 26px;
+      gap:10px;
+      margin:2px 0 12px;
     }}
-    .journey div {{
+    .journey-card {{
+      display:flex;
+      min-height:118px;
+      flex-direction:column;
+      justify-content:space-between;
       padding:14px;
-      border-radius:8px;
-      border:1px solid var(--line);
-      background:var(--soft);
+      color:#fff;
+      border:1.5px solid rgba(255,255,255,.72);
+      background:var(--step-color, rgba(255,255,255,.08));
+      box-shadow:0 18px 42px rgba(0,0,0,.18);
+    }}
+    .journey-card strong {{
+      color:#fff;
+      font-size:24px;
+      line-height:1;
+      font-weight:500;
+    }}
+    .journey-card span {{
+      color:#fff;
+      max-width:18ch;
+      font-size:12px;
+      line-height:1.18;
       font-weight:800;
-      color:var(--ink);
-      font-size:14px;
+    }}
+    .usecase-grid {{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:10px;
+      min-height:0;
+    }}
+    .usecase-card {{
+      padding:10px 11px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.07);
+      min-height:96px;
+    }}
+    .usecase-card h4 {{
+      margin:0 0 7px;
+      color:var(--magenta);
+      font-size:12px;
+      line-height:1.1;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }}
+    .usecase-card ul {{
+      margin:0;
+      padding:0 0 0 15px;
+      color:rgba(255,255,255,.78);
+      font-size:10.5px;
+      line-height:1.15;
+    }}
+    .usecase-card li + li {{
+      margin-top:2px;
     }}
     .usecases {{
       columns:2;
@@ -3099,8 +3432,7 @@ html_doc = f"""<!doctype html>
     }}
     .sticky-chapter {{ background:transparent; }}
     .chapter-aside p,
-    .event-panel p,
-    .contact p {{ color:#cbd5e1; }}
+    .event-panel p {{ color:#cbd5e1; }}
     .scene,
     .pillar-card {{
       border-top-color:rgba(226,232,240,.16);
@@ -3182,7 +3514,6 @@ html_doc = f"""<!doctype html>
       border-color:rgba(226,232,240,.18);
       color:#fff;
     }}
-    .contact {{ background:transparent; }}
     .contact-card a {{ color:#ff4f98; }}
     dialog {{
       background:#010817;
@@ -3335,6 +3666,52 @@ html_doc = f"""<!doctype html>
       .hero-grid, .chapter-grid, .positioning, .map-panel, .pillar-wrap, .ecosystem, .event-grid {{
         grid-template-columns:1fr;
       }}
+      .offering-pyramid-scrolly {{
+        min-height:230vh;
+      }}
+      .offering-pyramid-stage {{
+        align-items:start;
+        padding:46px 0 76px;
+      }}
+      .offering-pyramid-inner {{
+        width:min(100% - 32px, 720px);
+        grid-template-columns:1fr;
+        gap:20px;
+      }}
+      .offering-pyramid-heading h2 {{
+        font-size:clamp(34px, 10vw, 48px);
+      }}
+      .offering-pyramid-heading p {{
+        font-size:15px;
+      }}
+      .offering-flow {{
+        gap:8px;
+      }}
+      .offering-flow-row {{
+        min-height:0;
+        grid-template-columns:1fr;
+      }}
+      .offering-flow-row::before {{
+        left:0;
+        top:0;
+        bottom:0;
+        border-radius:14px;
+      }}
+      .offering-flow-bar {{
+        width:100%;
+        min-height:64px;
+        padding:14px 16px;
+      }}
+      .offering-flow-bar h3 {{
+        font-size:clamp(17px, 5vw, 22px);
+      }}
+      .offering-flow-copy {{
+        padding:12px 16px 14px 18px;
+      }}
+      .offering-flow-copy p {{
+        font-size:13px;
+        line-height:1.24;
+      }}
       .presence-globe-scrolly {{
         min-height:168vh;
       }}
@@ -3478,6 +3855,77 @@ html_doc = f"""<!doctype html>
       .scene {{ min-height:auto; }}
       .stat-strip, .diff-grid, .metric-grid, .proof-grid, .service-grid, .contact-wrap, .modal-metrics {{
         grid-template-columns:1fr;
+      }}
+      .heineken-modal .modal-body {{
+        height:min(94vh, 720px);
+        overflow:hidden;
+        padding:14px 14px 16px;
+      }}
+      .heineken-modal-title {{
+        align-items:center;
+        flex-direction:row;
+        gap:10px;
+      }}
+      .heineken-modal-logo {{
+        width:128px;
+        min-width:128px;
+        padding:8px 10px;
+      }}
+      .heineken-modal-logo img {{
+        max-height:32px;
+      }}
+      .heineken-modal .modal-head h2 {{
+        font-size:24px;
+      }}
+      .heineken-modal .eyebrow {{
+        font-size:10px;
+        margin-bottom:4px;
+      }}
+      .heineken-modal .modal-metrics {{
+        grid-template-columns:repeat(3,1fr);
+        gap:7px;
+      }}
+      .heineken-modal .metric {{
+        padding:8px 8px;
+      }}
+      .heineken-modal .metric strong {{
+        font-size:22px;
+      }}
+      .heineken-modal .metric span {{
+        font-size:10px;
+      }}
+      .journey,
+      .usecase-grid {{
+        grid-template-columns:repeat(5,1fr);
+      }}
+      .journey {{
+        gap:6px;
+      }}
+      .journey-card {{
+        min-height:86px;
+        padding:9px 8px;
+      }}
+      .journey-card strong {{
+        font-size:15px;
+      }}
+      .journey-card span {{
+        font-size:8.5px;
+        line-height:1.1;
+      }}
+      .usecase-grid {{
+        grid-template-columns:repeat(2, minmax(0,1fr));
+        gap:7px;
+      }}
+      .usecase-card {{
+        min-height:92px;
+        padding:8px;
+      }}
+      .usecase-card h4 {{
+        font-size:10px;
+      }}
+      .usecase-card ul {{
+        font-size:9.5px;
+        line-height:1.12;
       }}
       .genai-kicker h2 {{
         font-size:clamp(38px, 10vw, 54px);
@@ -3654,7 +4102,6 @@ html_doc = f"""<!doctype html>
       <a href="#presence">Presence</a>
       <a href="#offering">Offering</a>
       <a href="#adopt-ai">Adopt AI</a>
-      <a href="#contact">Contact</a>
     </nav>
   </header>
 
@@ -3756,8 +4203,8 @@ html_doc = f"""<!doctype html>
               </div>
               <h2 class="heineken-history-title">
                 <span>Our history with</span>
-                <button class="heineken-logo-link" type="button" data-case-trigger="heineken" aria-label="Open HEINEKEN case">
-                  <img src="{heineken_white_logo}" alt="HEINEKEN logo">
+                <button class="heineken-logo-link" type="button" data-case-trigger="heineken" aria-label="Open Heineken case">
+                  <img src="{heineken_white_logo}" alt="Heineken logo">
                 </button>
               </h2>
               <div class="heineken-bottle-video-wrap" aria-hidden="true">
@@ -3773,26 +4220,34 @@ html_doc = f"""<!doctype html>
       {section_transition("Offering")}
       <div class="sticky-chapter">
         <div class="container">
-          <div class="eyebrow">End-to-end transformation</div>
-          <h2>Artefact connects the world of business with technology from ambition to adoption.</h2>
-          <p>We help companies define their future state, quantify ambitions, identify and prioritize high-impact use cases, build the right data and technology foundations, and drive adoption across the organization.</p>
-          <div class="pillar-wrap">
-            <div class="pyramid" aria-label="Transformation pillars">
-              <img src="{stairs_img}" alt="">
-              <div class="pyramid-levels">
-                <div class="level">Vision & Use Cases</div>
-                <div class="level">Operating Model</div>
-                <div class="level">Data Infrastructure & Governance</div>
-                <div class="level">Change Management & Acculturation</div>
+          <article class="offering-pyramid-scrolly" data-offering-pyramid>
+            <div class="offering-pyramid-stage">
+              <div class="offering-pyramid-inner">
+                <div class="offering-pyramid-heading">
+                  <h2>End-to-end Data & AI expertise.</h2>
+                  <p>Connecting business ambition with technology execution.</p>
+                </div>
+                <div class="offering-flow" aria-label="Transformation pillars">
+                  <article class="offering-flow-row flow-vision">
+                    <div class="offering-flow-bar"><h3>Vision & Use Cases</h3></div>
+                    <div class="offering-flow-copy"><p>Define the future state of the business and quantify ambitions. Ideate and prioritize high-impact use cases.</p></div>
+                  </article>
+                  <article class="offering-flow-row flow-model">
+                    <div class="offering-flow-bar"><h3>Operating Model</h3></div>
+                    <div class="offering-flow-copy"><p>Create an efficient operating model and deliver use cases through adapted methodologies, organization, tools, and governance.</p></div>
+                  </article>
+                  <article class="offering-flow-row flow-data">
+                    <div class="offering-flow-bar"><h3>Data Infrastructure & Governance</h3></div>
+                    <div class="offering-flow-copy"><p>Build a cutting-edge technology ecosystem. Treat data as an asset so it becomes high-quality, reliable, and useful.</p></div>
+                  </article>
+                  <article class="offering-flow-row flow-change">
+                    <div class="offering-flow-bar"><h3>Change Management & Acculturation</h3></div>
+                    <div class="offering-flow-copy"><p>Manage change at scale to engage everyone, from leaders to team members.</p></div>
+                  </article>
+                </div>
               </div>
             </div>
-            <div data-pillar-region>
-              <article class="pillar-card" data-pillar="vision"><h3>Vision And Use Cases</h3><p>Define the future state of the business, quantify ambitions, and prioritize high-impact use cases.</p></article>
-              <article class="pillar-card" data-pillar="model"><h3>Operating Model</h3><p>Create an efficient operating model and deliver use cases through adapted methodologies, organization, tools, and governance.</p></article>
-              <article class="pillar-card" data-pillar="data"><h3>Data Infrastructure And Data Governance</h3><p>Build a cutting-edge technology ecosystem. Treat data as an asset so it becomes high-quality, reliable, and useful.</p></article>
-              <article class="pillar-card" data-pillar="change"><h3>Change Management And Acculturation</h3><p>Manage change at scale to engage everyone, from leaders to team members.</p></article>
-            </div>
-          </div>
+          </article>
 
           <div style="padding-top:80px;">
             <h2>Artefact gives you what it takes to succeed in Data & AI-driven transformation at scale.</h2>
@@ -3853,7 +4308,6 @@ html_doc = f"""<!doctype html>
     </section>
 
     <section id="contact" class="contact section">
-      {section_transition("Contact")}
       <div class="container">
         <div class="eyebrow">Contact Us</div>
         <h2>Accelerate your Data, AI, and Agentic AI transformation with Artefact LATAM.</h2>
@@ -3945,48 +4399,39 @@ html_doc = f"""<!doctype html>
     </div>
   </dialog>
 
-  <dialog data-case-modal="heineken" aria-labelledby="heineken-title">
+  <dialog class="heineken-modal" data-case-modal="heineken" aria-labelledby="heineken-title">
     <div class="modal-body">
       <div class="modal-head">
-        <div>
-          <div class="eyebrow">Case module</div>
-          <h2 id="heineken-title">Our History With HEINEKEN</h2>
-          <p>We built a journey together with HEINEKEN, using AI as a business unit to bring value through Advanced Analytics.</p>
+        <div class="heineken-modal-title">
+          <div class="heineken-modal-logo"><img src="{heineken_white_logo}" alt="Heineken logo"></div>
+          <div>
+            <div class="eyebrow">MEMORABLE EXAMPLE</div>
+            <h2 id="heineken-title">Our History With Heineken</h2>
+          </div>
         </div>
         <button class="close" type="button" data-modal-close aria-label="Close">×</button>
       </div>
-      <p>Together, Artefact and HEINEKEN created products throughout the entire value chain, scaling Advanced Analytics from initial use cases into a broader operating model for data-driven business impact.</p>
+      <p class="heineken-modal-lead">We built a journey together with Heineken, using AI as a business unit to bring value through Advanced Analytics. Together, Artefact and Heineken created products throughout the entire value chain.</p>
       <div class="modal-metrics">
-        <div class="metric"><strong>+R$650M</strong><span>already captured through the use cases developed.</span></div>
-        <div class="metric"><strong>+2,000</strong><span>people impacted at HEINEKEN.</span></div>
+        <div class="metric"><strong>+US$120M</strong><span>already captured through the use cases developed.</span></div>
+        <div class="metric"><strong>+2,000</strong><span>people impacted at Heineken.</span></div>
         <div class="metric"><strong>x19</strong><span>ROI on the investment in Artefact's resources.</span></div>
       </div>
-      <h3>Journey timeline</h3>
+      <h3>The journey evolved over several years</h3>
       <div class="journey">
-        <div>First step toward Advanced Analytics.</div>
-        <div>Expansion of scope to other areas.</div>
-        <div>Use case sizing, knowledge internalization, and ways of working.</div>
-        <div>Hybrid squads, architecture, and sustainable evolution.</div>
-        <div>Innovation, GenAI, and Agentic acceleration.</div>
+        <article class="journey-card" style="--step-color:#002244;"><strong>2021</strong><span>First step toward Advanced Analytics.</span></article>
+        <article class="journey-card" style="--step-color:#273275;"><strong>2022</strong><span>Expansion of scope to other areas.</span></article>
+        <article class="journey-card" style="--step-color:#553982;"><strong>2023</strong><span>Use case sizing, knowledge internalization, and ways of working.</span></article>
+        <article class="journey-card" style="--step-color:#a51e77;"><strong>2024</strong><span>Creation of hybrid squads, architecture, and sustainable evolution.</span></article>
+        <article class="journey-card" style="--step-color:#ff0066;"><strong>2025</strong><span>Acceleration of innovation, GenAI, and Agentic initiatives.</span></article>
       </div>
-      <h3>Value chain use cases</h3>
-      <ul class="usecases">
-        <li>Profitability modeling.</li>
-        <li>Credit recommendation.</li>
-        <li>Turnover forecasting.</li>
-        <li>Optimization of beer coloring.</li>
-        <li>Thermal energy optimization.</li>
-        <li>Automation of brewery reports.</li>
-        <li>Stock shortage forecasting.</li>
-        <li>Transportation optimization.</li>
-        <li>Planning optimization.</li>
-        <li>Inventory policy optimization.</li>
-        <li>MROI.</li>
-        <li>Sales channel segmentation.</li>
-        <li>B2B analysis.</li>
-        <li>Product selection for e-commerce.</li>
-      </ul>
-      <p>The partnership also created a joint vision through cases in the media, events, and podcasts.</p>
+      <h3>Products throughout the entire value chain</h3>
+      <div class="usecase-grid">
+        <article class="usecase-card"><h4>Support Areas</h4><ul><li>Finance: Profitability Model</li><li>Finance: Credit recommendation</li><li>HR: Turnover Forecast</li></ul></article>
+        <article class="usecase-card"><h4>Manufacturing</h4><ul><li>Optimization of beer coloring</li><li>Thermal energy optimization</li><li>Automation of brewery reports</li></ul></article>
+        <article class="usecase-card"><h4>Distribution</h4><ul><li>Stock shortage forecast</li><li>Transportation optimization</li><li>Planning optimization</li><li>Inventory policy optimization</li></ul></article>
+        <article class="usecase-card"><h4>Marketing/Sales</h4><ul><li>Allocation of low-liquidity assets</li><li>MROI</li><li>Segmentation of sales channels</li><li>B2B Analysis</li><li>Product selection for e-commerce</li><li>Variety</li></ul></article>
+      </div>
     </div>
   </dialog>
 
@@ -4001,6 +4446,7 @@ html_doc = f"""<!doctype html>
     const presenceGlobe = document.querySelector("[data-presence-globe]");
     const presenceVideo = document.querySelector("[data-presence-video]");
     const heinekenBottle = document.querySelector("[data-heineken-bottle]");
+    const offeringPyramid = document.querySelector("[data-offering-pyramid]");
     const heinekenVideo = document.querySelector("[data-heineken-video]");
     const heinekenTitle = document.querySelector(".heineken-history-title");
     const heinekenBottleWrap = document.querySelector(".heineken-bottle-video-wrap");
@@ -4023,6 +4469,24 @@ html_doc = f"""<!doctype html>
       if (progress > .40) step = 2;
       if (progress > .86) step = 3;
       vennScrolly.classList.add(`venn-step-${{step}}`);
+    }}
+
+    function updateOfferingPyramid() {{
+      if (!offeringPyramid) return;
+      offeringPyramid.classList.remove("pyramid-step-0", "pyramid-step-1", "pyramid-step-2", "pyramid-step-3", "pyramid-step-4");
+      if (prefersReduced) {{
+        offeringPyramid.classList.add("pyramid-step-4");
+        return;
+      }}
+      const rect = offeringPyramid.getBoundingClientRect();
+      const travel = Math.max(1, offeringPyramid.offsetHeight - window.innerHeight);
+      const progress = clamp(-rect.top / travel);
+      let step = 0;
+      if (progress > .08) step = 1;
+      if (progress > .28) step = 2;
+      if (progress > .50) step = 3;
+      if (progress > .72) step = 4;
+      offeringPyramid.classList.add(`pyramid-step-${{step}}`);
     }}
 
     function stepPresenceScrub() {{
@@ -4088,7 +4552,8 @@ html_doc = f"""<!doctype html>
         const titleRect = heinekenTitle.getBoundingClientRect();
         const bottleRect = heinekenBottleWrap.getBoundingClientRect();
         const revealEdge = bottleRect.left + bottleRect.width * .26;
-        const revealProgress = clamp((revealEdge - titleRect.left) / Math.max(1, titleRect.width));
+        const rawRevealProgress = clamp((revealEdge - titleRect.left) / Math.max(1, titleRect.width));
+        const revealProgress = clamp((rawRevealProgress - .065) / .935);
         heinekenBottle.style.setProperty("--heineken-text-opacity", Math.min(1, revealProgress * 1.8).toFixed(3));
         heinekenBottle.style.setProperty("--heineken-text-clip", `${{((1 - revealProgress) * 100).toFixed(2)}}%`);
       }}
@@ -4124,9 +4589,11 @@ html_doc = f"""<!doctype html>
     window.addEventListener("scroll", updateVennScrolly, {{ passive: true }});
     window.addEventListener("scroll", updatePresenceGlobe, {{ passive: true }});
     window.addEventListener("scroll", updateHeinekenBottle, {{ passive: true }});
+    window.addEventListener("scroll", updateOfferingPyramid, {{ passive: true }});
     window.addEventListener("resize", updateVennScrolly);
     window.addEventListener("resize", updatePresenceGlobe);
     window.addEventListener("resize", updateHeinekenBottle);
+    window.addEventListener("resize", updateOfferingPyramid);
     if (presenceVideo) {{
       presenceVideo.addEventListener("loadedmetadata", () => {{
         renderedPresenceTime = 0;
@@ -4146,6 +4613,7 @@ html_doc = f"""<!doctype html>
     updateVennScrolly();
     updatePresenceGlobe();
     updateHeinekenBottle();
+    updateOfferingPyramid();
 
     const heroMessageEls = [...document.querySelectorAll("[data-hero-message]")];
     if (heroMessageEls.length) {{
@@ -4251,6 +4719,7 @@ html_doc = f"""<!doctype html>
 
     const setupPersonVideo = () => {{
       if (!personVideo || prefersReduced) return;
+      const personClipDuration = () => Math.min(3, personVideo.duration || 3);
 
       const setMobilePlayback = () => {{
         if (window.innerWidth < 1024) {{
@@ -4260,7 +4729,10 @@ html_doc = f"""<!doctype html>
           personVideo.play().catch(() => {{}});
         }} else {{
           personVideo.pause();
-          targetPersonTime = personVideo.currentTime || 0;
+          if ((personVideo.currentTime || 0) > personClipDuration()) {{
+            personVideo.currentTime = 0;
+          }}
+          targetPersonTime = Math.min(personVideo.currentTime || 0, personClipDuration());
           renderedPersonTime = targetPersonTime;
         }}
       }};
@@ -4309,10 +4781,17 @@ html_doc = f"""<!doctype html>
           : Math.max(1, personFocusX);
         const centeredProgress = clamp(relativeMouseX / sideRange, -1, 1);
         const easedProgress = Math.sign(centeredProgress) * smooth(Math.abs(centeredProgress));
-        targetPersonTime = clamp(((easedProgress + 1) / 2) * personVideo.duration, 0, personVideo.duration);
+        targetPersonTime = clamp(((easedProgress + 1) / 2) * personClipDuration(), 0, personClipDuration());
 
         requestPersonScrub();
       }};
+
+      personVideo.addEventListener("timeupdate", () => {{
+        if (window.innerWidth < 1024 && personVideo.currentTime >= personClipDuration()) {{
+          personVideo.currentTime = 0;
+          personVideo.play().catch(() => {{}});
+        }}
+      }});
 
       setMobilePlayback();
       window.addEventListener("resize", setMobilePlayback);
